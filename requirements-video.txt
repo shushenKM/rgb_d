@@ -1,0 +1,5 @@
+# Python 3.10+. Install the appropriate CUDA-enabled torch build separately for GPU training.
+# The model adapters use torch directly; torchvision/einops are not required.
+numpy>=1.26,<3
+torch>=2.7,<3
+opencv-python-headless>=4.10,<5

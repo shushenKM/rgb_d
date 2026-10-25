@@ -1,0 +1,14 @@
+{
+  "name": "protocol2",
+  "type": "held_out_repetitions",
+  "train_repetitions": [1, 2, 3, 4],
+  "test_repetitions": [5],
+  "validation": null,
+  "gesture_rules": {
+    "screw": {"train_repetitions": [1, 2], "test_repetitions": [3]},
+    "insert": {"train_repetitions": [1, 2, 3, 4, 6, 7, 8, 9], "test_repetitions": [5, 10]},
+    "deinsert": {"train_repetitions": [1, 2, 3, 4, 6, 7, 8, 9], "test_repetitions": [5, 10]}
+  },
+  "repetition_blocks": {"gestures": ["insert", "deinsert"], "block_size": 5, "preserve_original_repetition_ids": true},
+  "split_before_windowing": true
+}

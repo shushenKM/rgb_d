@@ -36,8 +36,8 @@ def write_json(path, value):
 
 
 def create_run_directory(output_root="runs/imu", name=None, project_root=None, *, modality="imu"):
-    if modality not in ("imu", "semg"):
-        raise ValueError("Output modality must be imu or semg")
+    if modality not in ("imu", "semg", "rgb", "depth"):
+        raise ValueError("Output modality must be imu, semg, rgb or depth")
     root = (PROJECT_ROOT if project_root is None else Path(project_root)).resolve()
     output = project_path(output_root, root)
     allowed = (root / "runs" / modality).resolve()

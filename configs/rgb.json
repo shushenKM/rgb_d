@@ -1,0 +1,31 @@
+{
+  "modality": "rgb",
+  "dataset_config": "configs/dataset.json",
+  "model": "tsm",
+  "views": ["front"],
+  "subject_ids": null,
+  "session_ids": ["step1", "step2", "step3"],
+  "expected_class_count": 9,
+  "expected_gesture_labels": ["approach", "deinsert", "grasp", "insert", "lift", "move", "place", "release", "screw"],
+  "input": {"num_frames": 8, "image_size": 128},
+  "screw_sampling": {"duration_s": 1.0, "segments_per_trial": 5, "short_parent_policy": "shrink"},
+  "data_quality": {"allow_within_subject_test_overlap": true},
+  "model_parameters": {"pretrained_backbone": null},
+  "training": {
+    "epochs": 50,
+    "batch_size": 16,
+    "learning_rate": 0.0001,
+    "weight_decay": 0.001,
+    "seed": 42,
+    "device": "auto",
+    "num_workers": 0,
+    "cpu_threads": 4,
+    "deterministic": true,
+    "amp": true,
+    "validation": {"strategy": "auto", "fraction": 0.2, "allow_train_validation_overlap": true},
+    "scheduler": {"type": "reduce_on_plateau", "factor": 0.5, "patience": 3, "min_lr": 0.000001},
+    "early_stopping_patience": 10,
+    "gradient_clip_norm": 5.0
+  },
+  "output_root": "runs/rgb"
+}

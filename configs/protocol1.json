@@ -1,0 +1,7 @@
+{
+  "name": "protocol1",
+  "type": "leave_one_subject_out",
+  "test_subject_id": "7Shushen",
+  "validation": null,
+  "split_before_windowing": true
+}

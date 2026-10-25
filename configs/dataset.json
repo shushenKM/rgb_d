@@ -1,0 +1,9 @@
+{
+  "dataset_root": "../dataset",
+  "read_only": true,
+  "annotation_locale": "EN",
+  "annotation_file_pattern": "rgb_depth_gesture_segments*_EN.csv",
+  "subject_ids": null,
+  "folders": {"annotations": "annotation", "rgbd": "rgbd"},
+  "session_mapping": {"step1": "session1", "step2": "session2", "step3": "session3"}
+}
