@@ -11,7 +11,7 @@ import argparse
 import copy
 import sys
 
-from scripts.artifacts import PROJECT_ROOT, create_run_directory, fold_directory, read_config, write_json
+from scripts.artifacts import PROJECT_ROOT, create_run_directory, experiment_run_name, fold_directory, read_config, write_json
 
 
 def train_video(modality, config_path, protocol_path, *, prepare_only=False,
@@ -51,7 +51,9 @@ def train_video(modality, config_path, protocol_path, *, prepare_only=False,
         raise ValueError("--test-subject and --validation-subject apply only to protocol1")
     if config.get("model") not in ("tsm", "mvtn"):
         raise ValueError("model must be tsm or mvtn")
-    run = create_run_directory(config.get("output_root", "runs/" + modality), run_name, modality=modality)
+    run = create_run_directory(config.get("output_root", "runs/" + modality), run_name,
+        modality=modality, default_name=experiment_run_name(
+            modality, config, protocol, prepare_only=prepare_only))
     write_json(run / "config.json", {modality: config, "dataset": dataset, "protocol": protocol})
     write_json(run / "state.json", {"state": "preparing", "synthetic": False})
     print("Preparing {} | model={} | views={} | protocol={}".format(
@@ -87,6 +89,8 @@ def train_video(modality, config_path, protocol_path, *, prepare_only=False,
             from scripts.metrics import aggregate_fold_metrics
             aggregate = aggregate_fold_metrics(r["test_metrics"] for r in results)
             write_json(run / "aggregate_metrics.json", aggregate)
+            from scripts.plots import save_training_report
+            save_training_report(run, results=results)
             if len(results) > 1:
                 print("\nFinal test results across {} folds (mean +/- standard deviation):".format(len(results)))
                 for key, title in (("accuracy", "Accuracy"), ("macro_f1", "Macro F1"), ("weighted_f1", "Weighted F1")):

@@ -87,6 +87,8 @@ class VideoTrainingTests(unittest.TestCase):
                      "predictions.csv", "environment.json", "model.json", "result.json", "test_samples.json",
                      "train_samples.json", "validation_samples.json", "protocol.json", "split_summary.json"):
             self.assertTrue((self.output / name).is_file(), name)
+        self.assertEqual(json.loads((self.output / "plot_status.json").read_text())["status"], "complete")
+        self.assertTrue((self.output / "report.html").is_file())
         self.assertIn("Final test results: invented", terminal)
         self.assertIn("Confusion matrix", terminal)
         self.assertEqual(result["test_metrics"]["sample_count"], 2)

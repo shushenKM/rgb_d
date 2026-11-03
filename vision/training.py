@@ -401,4 +401,6 @@ def train_fold(fold, label_mapping, config, output_dir, dataset_root):
                   test_metrics=test_metrics)
     _write_json(output, "result.json", result)
     print(format_test_report(result), flush=True)
+    from scripts.plots import save_training_report
+    save_training_report(output)
     return result

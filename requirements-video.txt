@@ -3,3 +3,4 @@
 numpy>=1.26,<3
 torch>=2.7,<3
 opencv-python-headless>=4.10,<5
+matplotlib>=3.7,<4

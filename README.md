@@ -207,3 +207,39 @@ integration check with nine real samples per partition. Those tiny checks are
 marked `benchmark: false` in their run metadata and are not experiment results.
 Launching the RGB preparation command from outside this repository also passed.
 The eight source annotation hashes remained unchanged throughout verification.
+
+
+Run folder names are generated from the effective experiment settings, without
+any date or time: `modality_model_batchN_epochN_protocol_selection_...`.
+Selection lists the sensors, grids, or camera views in input order. Names also
+include input points (IMU/sEMG) or frame count and image size (RGB/depth), initial
+learning rate, seed, and explicitly configured test/validation participants.
+The epoch value is the requested maximum, not the early-stopped epoch count.
+Preparation-only runs end in `_prepare`; synthetic checks end in `_synthetic`.
+Repeated automatic names get `_run02`, `_run03`, etc., without overwriting runs.
+`--run-name` still chooses an exact custom name and rejects an existing name.
+Existing folders keep their names; all new folders remain under `runs/<modality>/`.
+Full settings, including parameters omitted from the name, remain in `config.json`.
+
+
+After training, open `report.html` in the run folder. It links each fold's
+`report.html` and, for multiple folds, compares final test accuracy, macro F1,
+and weighted F1 (unweighted mean and population SD). Each fold's `plots/`
+contains PNG and SVG figures for loss, accuracy, validation macro F1, learning
+rate, epoch duration, confusion matrices (counts and percentages per true class),
+per-gesture precision/recall/F1, and test support. The selected checkpoint epoch
+is marked on learning curves. Test is evaluated only at the end, not every epoch.
+No browser window opens automatically; the terminal prints the report location.
+
+Plots use saved `history.csv` and `result.json`, so completed older runs can be
+plotted without reading recordings or retraining. From the repository root:
+
+```powershell
+python -m scripts.plots --run "runs/rgb/your_run_folder"
+```
+
+A single fold directory also works. Missing historical fields (such as epoch
+duration) are shown as unavailable. Regeneration replaces generated plots and
+HTML, preserving checkpoints and saved metrics. A plotting error is recorded in
+`plot_status.json` and printed without failing completed training. Matplotlib is
+included in the requirements; its cache is kept in `runs/_plot_cache/`.
