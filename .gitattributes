@@ -1,0 +1,5 @@
+runs/**/*.pt filter=lfs diff=lfs merge=lfs -text
+runs/**/*.pth filter=lfs diff=lfs merge=lfs -text
+runs/**/*.ckpt filter=lfs diff=lfs merge=lfs -text
+runs/**/*.safetensors filter=lfs diff=lfs merge=lfs -text
+runs/**/*.onnx filter=lfs diff=lfs merge=lfs -text

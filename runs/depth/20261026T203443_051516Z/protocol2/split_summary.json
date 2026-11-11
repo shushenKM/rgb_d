@@ -1,0 +1,77 @@
+{
+  "train": {
+    "parents": 1399,
+    "clips": 1511,
+    "subjects": [
+      "1Alice",
+      "2Bingqian",
+      "3Chawki",
+      "4Chenrui",
+      "5Imad",
+      "6Jeremy",
+      "7Shushen",
+      "8Yang"
+    ],
+    "gesture_counts": {
+      "approach": 149,
+      "deinsert": 156,
+      "grasp": 149,
+      "insert": 156,
+      "lift": 153,
+      "move": 306,
+      "place": 153,
+      "release": 149,
+      "screw": 140
+    }
+  },
+  "validation": {
+    "parents": 361,
+    "clips": 377,
+    "subjects": [
+      "1Alice",
+      "2Bingqian",
+      "3Chawki",
+      "4Chenrui",
+      "5Imad",
+      "6Jeremy",
+      "7Shushen",
+      "8Yang"
+    ],
+    "gesture_counts": {
+      "approach": 43,
+      "deinsert": 36,
+      "grasp": 43,
+      "insert": 36,
+      "lift": 39,
+      "move": 78,
+      "place": 39,
+      "release": 43,
+      "screw": 20
+    }
+  },
+  "test": {
+    "parents": 448,
+    "clips": 512,
+    "subjects": [
+      "1Alice",
+      "2Bingqian",
+      "3Chawki",
+      "4Chenrui",
+      "5Imad",
+      "6Jeremy",
+      "7Shushen",
+      "8Yang"
+    ],
+    "gesture_counts": {
+      "approach": 48,
+      "deinsert": 48,
+      "grasp": 48,
+      "insert": 48,
+      "lift": 48,
+      "move": 96,
+      "place": 48,
+      "release": 48,
+      "screw": 80
+    }
+  }
+}

@@ -3,6 +3,7 @@ import json
 import hashlib
 from pathlib import Path
 import re
+from scripts.protocol_config import normalize_protocol
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -42,6 +43,7 @@ def experiment_run_name(modality, config, protocol, *, prepare_only=False, synth
     Full settings remain in config.json. Keep names short enough for Windows;
     unusually long names receive a content hash after truncation.
     """
+    protocol = normalize_protocol(protocol)
     video = modality in ("rgb", "depth")
     training, inputs = config.get("training") or {}, config.get("input") or {}
     defaults = {"imu": "If_ConvTransformer_W", "semg": "VisionTransformer",
@@ -53,6 +55,12 @@ def experiment_run_name(modality, config, protocol, *, prepare_only=False, synth
              "epoch{}".format(training.get("epochs", 30)),
              protocol.get("name", protocol.get("type", "protocol"))]
     key = "views" if video else "sensor_ids" if modality == "imu" else "grid_ids"
+    if protocol.get("type") == "grouped_percentages":
+        parts.append("split" + "-".join("{:g}".format(protocol["split_percentages"][p])
+                                      for p in ("train", "validation", "test")))
+        parts.append("ss{}".format(protocol.get("split_seed", training.get("seed", 42))))
+    if config.get("task", "gesture") != "gesture":
+        parts.insert(1, config["task"])
     selection = config.get(key) or []
     if selection:
         parts.append("-".join(token(item) for item in selection))

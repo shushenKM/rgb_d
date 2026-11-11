@@ -38,6 +38,7 @@ from pathlib import Path
 import numpy as np
 
 from scripts.labels import build_label_mapping
+from scripts.tasks import label_of, validate_task, with_task_labels
 from scripts.protocols import SplitValidationError, validate_split
 from scripts.rgbd_annotations import VIEW_COLUMNS, read_dataset_rgbd_annotations
 from scripts.training_protocols import build_training_splits
@@ -165,7 +166,7 @@ def _parent_clips(record, recordings, settings, screw_settings, label_mapping, i
     for child in range(count):
         sample = {key: record[key] for key in SOURCE_FIELDS}
         sample.update(sample_id="{}#clip{:02d}".format(record["record_id"], child),
-                      parent_record_id=record["record_id"], label=label_mapping[record["gesture_label"]],
+                      parent_record_id=record["record_id"], target_label=label_of(record), label=label_mapping[label_of(record)],
                       clip_index=child, clips_in_parent=count, views=[])
         for view in settings["views"]:
             recording = recordings[(record["subject_id"], record["session_id"], view)]
@@ -243,6 +244,7 @@ def prepare_video_dataset(dataset_config, config, protocol):
     records = _select_records(records, config, issues)
     _block(issues, manifest)
     labels = build_label_mapping(r["gesture_label"] for r in records)
+    validate_task(config.get("task", "gesture"), protocol)
     expected_labels = config.get("expected_gesture_labels")
     if expected_labels is not None and set(labels) != set(expected_labels):
         _issue(issues, "unexpected_gesture_vocabulary", "Gesture vocabulary differs from configuration", observed=sorted(labels))
@@ -252,6 +254,8 @@ def prepare_video_dataset(dataset_config, config, protocol):
     _block(issues, manifest)
     try:
         # This is intentionally before clips, frames, model data, or view expansion.
+        records = with_task_labels(records, config.get("task", "gesture"), protocol)
+        labels = build_label_mapping(label_of(record) for record in records)
         parent_folds = _training_splits(records, config, protocol)
     except SplitValidationError as error:
         issues.extend(error.result["issues"])

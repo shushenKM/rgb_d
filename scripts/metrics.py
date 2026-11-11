@@ -9,6 +9,7 @@ import operator
 from statistics import mean, pstdev
 
 from scripts.labels import validate_label_mapping
+from scripts.tasks import split_joint_label
 
 
 def _indices(values, class_count, name):
@@ -26,7 +27,7 @@ def _indices(values, class_count, name):
     return output
 
 
-def classification_metrics(y_true, y_pred, label_mapping):
+def classification_metrics(y_true, y_pred, label_mapping, *, _components=True):
     """Calculate accuracy/F1 and a confusion matrix over every mapped class.
 
     Rows in the confusion matrix are true labels; columns are predicted labels.
@@ -56,13 +57,25 @@ def classification_metrics(y_true, y_pred, label_mapping):
             "f1": f1, "support": support,
         }
     total = len(actual)
-    return {
+    result = {
         "accuracy": sum(confusion[index][index] for index in range(size)) / total,
         "macro_f1": sum(values["f1"] for values in per_class.values()) / size,
         "weighted_f1": sum(values["f1"] * values["support"] for values in per_class.values()) / total,
         "per_class": per_class, "confusion_matrix": confusion,
         "class_names": names, "sample_count": total,
     }
+    if _components and all("::object=" in name for name in names):
+        pairs = [split_joint_label(name) for name in names]
+        result["task"] = "gesture_object"
+        result["component_metrics"] = {}
+        for column, component in enumerate(("gesture", "object")):
+            vocabulary = sorted({pair[column] for pair in pairs})
+            mapping = {name: index for index, name in enumerate(vocabulary)}
+            remap = [mapping[pair[column]] for pair in pairs]
+            result["component_metrics"][component] = classification_metrics(
+                [remap[index] for index in actual], [remap[index] for index in predicted],
+                mapping, _components=False)
+    return result
 
 
 def aggregate_fold_metrics(fold_metrics):
@@ -80,6 +93,11 @@ def aggregate_fold_metrics(fold_metrics):
         if any(isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) for value in values):
             raise ValueError("Fold {} values must be finite numbers.".format(metric))
         summary[metric] = {"mean": mean(values), "std": pstdev(values)}
+    if all("component_metrics" in fold for fold in folds):
+        summary["component_metrics"] = {
+            key: aggregate_fold_metrics(fold["component_metrics"][key] for fold in folds)
+            for key in ("gesture", "object")
+        }
     return summary
 
 
@@ -108,9 +126,18 @@ def format_test_report(result):
         "",
         "Per-gesture test metrics (scores in %; support = test examples):",
     ]
-    name_width = max(len("Gesture"), max(map(len, names)))
+    components = metrics.get("component_metrics")
+    if components:
+        lines[-1] = "Per gesture-object pair test metrics (scores in %; support = test examples):"
+        lines.insert(2, "Task: gesture_object | test accuracy/F1 require the exact gesture-object pair")
+        for key in ("gesture", "object"):
+            scores = components[key]
+            lines.insert(-2, "{} component: accuracy {:.2%}, macro F1 {:.2%}".format(
+                key.capitalize(), scores["accuracy"], scores["macro_f1"]))
+    class_title = "Gesture-object" if components else "Gesture"
+    name_width = max(len(class_title), max(map(len, names)))
     row_format = "{:<" + str(name_width) + "}  {:>9}  {:>9}  {:>9}  {:>7}"
-    lines.append(row_format.format("Gesture", "Precision", "Recall", "F1", "Support"))
+    lines.append(row_format.format(class_title, "Precision", "Recall", "F1", "Support"))
     for name in names:
         values = metrics["per_class"][name]
         lines.append(row_format.format(

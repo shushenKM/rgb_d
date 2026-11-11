@@ -1,0 +1,199 @@
+{
+  "name": "protocol2",
+  "fold": "protocol2",
+  "modality": "rgb",
+  "model": "mvtn",
+  "views": [
+    "above"
+  ],
+  "epochs_completed": 22,
+  "best_epoch": 12,
+  "selected_epoch": 12,
+  "selected_checkpoint": "best.pt",
+  "selection": "validation_macro_f1",
+  "elapsed_s": 1189.3280000000013,
+  "test_metrics": {
+    "accuracy": 0.875,
+    "macro_f1": 0.8764432448642975,
+    "weighted_f1": 0.8540823211875844,
+    "per_class": {
+      "approach": {
+        "index": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 48
+      },
+      "deinsert": {
+        "index": 1,
+        "precision": 0.46153846153846156,
+        "recall": 1.0,
+        "f1": 0.631578947368421,
+        "support": 48
+      },
+      "grasp": {
+        "index": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 48
+      },
+      "insert": {
+        "index": 3,
+        "precision": 0.8571428571428571,
+        "recall": 1.0,
+        "f1": 0.923076923076923,
+        "support": 48
+      },
+      "lift": {
+        "index": 4,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 48
+      },
+      "move": {
+        "index": 5,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 96
+      },
+      "place": {
+        "index": 6,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 48
+      },
+      "release": {
+        "index": 7,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 48
+      },
+      "screw": {
+        "index": 8,
+        "precision": 1.0,
+        "recall": 0.2,
+        "f1": 0.33333333333333337,
+        "support": 80
+      }
+    },
+    "confusion_matrix": [
+      [
+        48,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        48,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        48,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        48,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        48,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        96,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        48,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        48,
+        0
+      ],
+      [
+        0,
+        56,
+        0,
+        8,
+        0,
+        0,
+        0,
+        0,
+        16
+      ]
+    ],
+    "class_names": [
+      "approach",
+      "deinsert",
+      "grasp",
+      "insert",
+      "lift",
+      "move",
+      "place",
+      "release",
+      "screw"
+    ],
+    "sample_count": 512,
+    "loss": 1.5687955694738775
+  }
+}

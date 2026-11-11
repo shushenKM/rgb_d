@@ -1,14 +1,74 @@
 {
   "name": "protocol2",
   "type": "held_out_repetitions",
-  "train_repetitions": [1, 2, 3, 4],
-  "test_repetitions": [5],
+  "grouped_percentages": false,
+  "split_percentages": {
+    "train": 70,
+    "validation": 15,
+    "test": 15
+  },
+  "split_seed": 42,
+  "train_repetitions": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "test_repetitions": [
+    5
+  ],
   "validation": null,
   "gesture_rules": {
-    "screw": {"train_repetitions": [1, 2], "test_repetitions": [3]},
-    "insert": {"train_repetitions": [1, 2, 3, 4, 6, 7, 8, 9], "test_repetitions": [5, 10]},
-    "deinsert": {"train_repetitions": [1, 2, 3, 4, 6, 7, 8, 9], "test_repetitions": [5, 10]}
+    "screw": {
+      "train_repetitions": [
+        1,
+        2
+      ],
+      "test_repetitions": [
+        3
+      ]
+    },
+    "insert": {
+      "train_repetitions": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9
+      ],
+      "test_repetitions": [
+        5,
+        10
+      ]
+    },
+    "deinsert": {
+      "train_repetitions": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9
+      ],
+      "test_repetitions": [
+        5,
+        10
+      ]
+    }
   },
-  "repetition_blocks": {"gestures": ["insert", "deinsert"], "block_size": 5, "preserve_original_repetition_ids": true},
-  "split_before_windowing": true
+  "repetition_blocks": {
+    "gestures": [
+      "insert",
+      "deinsert"
+    ],
+    "block_size": 5,
+    "preserve_original_repetition_ids": true
+  },
+  "split_before_windowing": true,
+  "allow_within_subject_test_overlap": true
 }

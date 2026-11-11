@@ -1,0 +1,6 @@
+{
+  "state": "failed",
+  "synthetic": false,
+  "error_type": "VideoDatasetPreparationError",
+  "message": "Video preparation requires review: annotation_read_error"
+}

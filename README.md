@@ -1,5 +1,105 @@
 # RGB and depth manipulative gesture recognition
 
+## Command and parameter guide
+
+Saved runs are versioned, with checkpoint files stored through Git LFS.
+See [uploading/downloading runs](runs/README.md) for commands on each computer.
+Joint-task run names begin with `<modality>_gesture_object_<model>_batch...`.
+
+Run from `rgb_d` with your environment activated. Each command is an independent
+example. CLI values override config values. Dataset/annotation files stay
+read-only; outputs go to `runs/rgb` or `runs/depth`.
+
+### Prepare, then train
+
+```powershell
+# Check selected data and splits without optimizing a model
+python train_rgb.py --protocol protocol2 --model tsm --views front --prepare-only
+python train_depth.py --protocol protocol2 --model tsm --views front --prepare-only
+
+# TSM, one camera
+python train_rgb.py --protocol protocol2 --model tsm --views front --epochs 50 --device cuda --workers 4
+python train_depth.py --protocol protocol2 --model tsm --views front --epochs 50 --device cuda --workers 4
+# MVTN, two cameras
+python train_rgb.py --protocol protocol2 --model mvtn --views above front --epochs 50 --device cuda --workers 4
+python train_depth.py --protocol protocol2 --model mvtn --views above front --epochs 50 --device cuda --workers 4
+
+# Gesture-object recognition (44 observed pairs in steps1-3)
+python train_rgb.py --task gesture_object --protocol protocol2 --model tsm --views front --prepare-only
+python train_rgb.py --task gesture_object --protocol protocol2 --model tsm --views front --device cuda
+python train_depth.py --task gesture_object --protocol protocol2 --model mvtn --views above front --device cuda
+
+# Protocol1: all participant folds, or one specified test/validation participant
+python train_rgb.py --protocol protocol1 --model tsm --views front --device cuda
+python train_depth.py --protocol protocol1 --test-subject 1Alice --validation-subject 2Bingqian --device cuda
+# Protocol3: gesture-only recognition with configured held-out objects
+python train_rgb.py --task gesture --protocol protocol3 --views front --prepare-only
+python train_rgb.py --task gesture --protocol protocol3 --views front --device cuda
+python train_depth.py --task gesture --protocol protocol3 --views front --device cuda
+
+# Regenerate existing plots; replace YOUR_RUN_FOLDER
+python -m scripts.plots --run "runs/rgb/YOUR_RUN_FOLDER"
+python train_rgb.py --help
+python train_depth.py --help
+```
+
+Both tasks support TSM/MVTN, RGB/depth, and either annotated view or both views.
+`gesture` (default) predicts 9 gestures; `gesture_object` predicts the exact pair.
+The joint task supports protocol1 and both protocol2 modes. Protocol3 is
+gesture-only because its test objects create unseen joint classes. These entry
+points use steps1–3; step4 experiments belong to the sibling `macro` project.
+
+### All training CLI parameters
+
+| Parameter | Meaning / choices |
+| --- | --- |
+| `--protocol NAME` | Required: `protocol1`, `protocol2`, `protocol3`, or custom JSON path. |
+| `--task gesture` / `gesture_object` | Config task if omitted; otherwise default `gesture`. |
+| `--config PATH` | Defaults to `configs/rgb.json` or `configs/depth.json`. |
+| `--prepare-only` | Check recordings and splits, save a compact summary; no model training. |
+| `--model tsm` / `mvtn` | Recognition model; defaults to the modality config. |
+| `--views front above` | One or more cameras, in order. Loader accepts front/above/left/right; current annotations support front/above only. |
+| `--subjects ID ...` | Optional participant folder subset. |
+| `--test-subject ID` | Protocol1: one LOSO test fold instead of all folds. |
+| `--validation-subject ID` | Protocol1: explicit validation participant. |
+| `--epochs N` | Maximum training epochs. |
+| `--device auto` / `cpu` / `cuda` / `cuda:0` | Auto selects CUDA when available. |
+| `--batch-size N` | Examples per training batch. |
+| `--workers N` | Data-loader workers; default 0 is portable on Windows. |
+| `--frames N` | Frames sampled per gesture and camera; default config uses 8. |
+| `--image-size N` | Square model input size; default config uses 128. |
+| `--backbone-weights PATH` | Optional local standard ResNet18 state dict; repository-relative or absolute path. |
+| `--run-name NAME` | New custom run directory; existing directories are never overwritten. |
+| `-h`, `--help` | Display the selected entry point's options. |
+
+These entry points have no `--experiment`, `--audit-only`, `--amp` or
+`--learning-rate` flags; use the modality config for AMP/learning rate.
+
+### Settings edited in JSON
+
+| File / setting | Effect |
+| --- | --- |
+| `configs/protocol1.json`: `test_subject_id` | Null rotates LOSO test participants; an ID fixes one test fold. |
+| `configs/<modality>.json`: `training.validation` | Auto uses a validation participant for protocol1 and grouped trials for repetition/object modes; `fraction` controls grouped validation. |
+| `configs/protocol2.json`: `grouped_percentages: false` | Use `train_repetitions`, `test_repetitions`, gesture-specific rules, and model validation settings. |
+| Same file: `grouped_percentages: true` | Use `split_percentages: {"train": 70, "validation": 15, "test": 15}` and `split_seed`; repetition/model validation rules are inactive. |
+| `configs/protocol3.json`: `test_object_ids` | Fixed test objects per gesture. These lists override `object_selection: last_per_gesture`; defaults are 6 for general gestures, 5 for insert/deinsert, 2 for screw. |
+| `configs/rgb.json`, `configs/depth.json`: `task`, `subject_ids`, `views` | Persistent task and selected participants/cameras. |
+| Same files: `training.learning_rate`, `weight_decay`, `seed`, `cpu_threads`, `deterministic`, `amp` | Optimizer, reproducibility and mixed precision. |
+| Same files: `training.scheduler`, `early_stopping_patience`, `gradient_clip_norm` | Learning-rate scheduling, stopping and gradient clipping. |
+| Same files: `training.batch_size`, `epochs`, `device`, `num_workers` | Defaults for their corresponding CLI flags. |
+| Same files: `input.num_frames`, `input.image_size` | Temporal/spatial input sizes; CLI overrides available. |
+| `configs/depth.json`: `input.depth_min`, `input.depth_max` | Fixed depth-value range used for scaling. |
+| Modality configs: `screw_sampling`, `model_parameters.pretrained_backbone`, `data_quality` | Screw excerpts, optional local backbone weights and accepted overlap settings. |
+| `configs/dataset.json` | Portable `../dataset`, annotation selection and step-to-recording mappings; keep `read_only: true`. |
+
+Percentage ratios total 100; train/test are positive, validation may be zero.
+Whole source trials remain together, so sample percentages can differ after
+rounding/windowing. Select either mode in the same protocol2 config and keep
+using `--protocol protocol2`. `protocol2_percentages` remains a legacy alias.
+
+## Project overview
+
 Train RGB and depth independently using **TSM** or **MVTN**, with the same
 gesture vocabulary and subject/repetition protocols as the IMU/sEMG project.
 Root entry points are `train_rgb.py` and `train_depth.py`.
@@ -58,13 +158,13 @@ unavailable. The verified runtime is Python 3.11 / PyTorch 2.7 with CUDA 12.8.
 Run these commands from this repository:
 
 ```powershell
-python train_rgb.py --protocol configs/protocol2.json --model tsm --views front --prepare-only
-python train_rgb.py --protocol configs/protocol1.json --model mvtn --views front above --prepare-only
+python train_rgb.py --protocol protocol2 --model tsm --views front --prepare-only
+python train_rgb.py --protocol protocol1 --model mvtn --views front above --prepare-only
 ```
 
 Preparation validates selected annotations, source availability, container
-metadata, endpoint decoding, class coverage and splits. It saves manifests and
-sampled frame indices without running optimization or extracting complete
+metadata, endpoint decoding, class coverage and splits. It saves a compact
+summary in `config.json` without running optimization or extracting complete
 videos. It does not decode every frame or guarantee the visual correctness of
 every label. For depth, it verifies selected depth paths and probes a depth
 image per recording.
@@ -72,8 +172,8 @@ image per recording.
 The accepted source-time overlaps remain **warnings**, including intersections
 between the same participant's training and test repetitions. This is explicit
 in `data_quality.allow_within_subject_test_overlap: true` in both modality
-configs. Set it to false for strict temporal checks. Warnings remain in
-`issues.json` and are counted in the terminal. Duplicate record IDs and trial
+configs. Set it to false for strict temporal checks. Warning counts are saved in
+`config.json` and printed in the terminal. Duplicate record IDs and trial
 assignment across partitions remain errors. Raw cross-participant pixel copies
 are not content-hashed by this baseline. Accepted overlaps may affect the
 interpretation of test scores; they are retained as requested.
@@ -82,19 +182,19 @@ interpretation of test scores; they are retained as requested.
 
 ```powershell
 # TSM, one camera, held-out repetitions
-python train_rgb.py --protocol configs/protocol2.json --model tsm --views front --epochs 50 --device cuda
+python train_rgb.py --protocol protocol2 --model tsm --views front --epochs 50 --device cuda
 
 # MVTN, above camera
-python train_rgb.py --protocol configs/protocol2.json --model mvtn --views above --epochs 50 --device cuda
+python train_rgb.py --protocol protocol2 --model mvtn --views above --epochs 50 --device cuda
 
 # Two cameras, shared model weights and averaged class logits
-python train_rgb.py --protocol configs/protocol2.json --model tsm --views front above --device cuda
+python train_rgb.py --protocol protocol2 --model tsm --views front above --device cuda
 
 # One unseen-participant fold
-python train_rgb.py --protocol configs/protocol1.json --model mvtn --views front --test-subject 1Alice --device cuda
+python train_rgb.py --protocol protocol1 --model mvtn --views front --test-subject 1Alice --device cuda
 
 # All eight unseen-participant folds
-python train_rgb.py --protocol configs/protocol1.json --model tsm --views front --device cuda
+python train_rgb.py --protocol protocol1 --model tsm --views front --device cuda
 ```
 
 Defaults are 8 frames per view, 128x128 input, batch size 4, 50 maximum epochs,
@@ -113,9 +213,9 @@ training. Training resume is not implemented in this baseline.
 ## Train depth separately
 
 ```powershell
-python train_depth.py --protocol configs/protocol2.json --model tsm --views front --prepare-only
-python train_depth.py --protocol configs/protocol2.json --model tsm --views front --device cuda
-python train_depth.py --protocol configs/protocol1.json --model mvtn --views front above --test-subject 1Alice --device cuda
+python train_depth.py --protocol protocol2 --model tsm --views front --prepare-only
+python train_depth.py --protocol protocol2 --model tsm --views front --device cuda
+python train_depth.py --protocol protocol1 --model mvtn --views front above --test-subject 1Alice --device cuda
 ```
 
 Depth uses the same CSV parents, protocols, camera choices and model switches.
@@ -179,10 +279,16 @@ uses 10 epochs without checkpoint-score improvement. Both are configurable in
 `training`. CUDA mixed precision is enabled by default. Test data is evaluated
 once, after restoring the selected checkpoint.
 
-Each run saves its resolved settings, issues, source manifest, labels and
-state. Each fold saves sample metadata, protocol/normalization information,
-`best.pt`, `last.pt`, `history.csv`, `environment.json`, `model.json`,
-`test_metrics.json`, `predictions.csv`, `confusion_matrix.csv` and `result.json`.
+Each run saves its settings, status, labels, warning counts and compact split
+summary together in `config.json`. Completed results and fold averages are in
+`results.json` and `aggregate_metrics.json`, with a linked `report.html`.
+Each trained fold saves `best.pt`, `last.pt`, `history.csv`, `predictions.csv`,
+`confusion_matrix.csv`, `result.json`, `report.html`, and PNG/SVG plots.
+`result.json` includes test metrics and model/device/training details.
+Separate sample lists, recording manifests, labels, normalization, model/environment
+JSON files and plot-status files are no longer exported. Checkpoints retain the
+model settings and label mapping. Preparation-only runs save just `config.json`;
+failures alone create `error.json`. Existing run folders remain unchanged.
 Terminal output includes training loss/accuracy, validation metrics, learning
 rate and epoch time, then final test accuracy, macro/weighted F1, per-gesture
 precision/recall/F1 and the confusion matrix. Multiple folds also report mean
@@ -241,5 +347,151 @@ python -m scripts.plots --run "runs/rgb/your_run_folder"
 A single fold directory also works. Missing historical fields (such as epoch
 duration) are shown as unavailable. Regeneration replaces generated plots and
 HTML, preserving checkpoints and saved metrics. A plotting error is recorded in
-`plot_status.json` and printed without failing completed training. Matplotlib is
+`plot_error.txt` and printed without failing completed training. Successful plots create no status file. Matplotlib is
 included in the requirements; its cache is kept in `runs/_plot_cache/`.
+
+## Micro-gesture tasks and protocol 3
+
+The classification target and the evaluation split are independent settings:
+
+| Task | Target example | Supported protocols |
+| --- | --- | --- |
+| `gesture` (default) | `grasp` | 1: unseen participant; 2: held-out repetitions; 3: held-out objects per gesture |
+| `gesture_object` | `grasp::object=1` | 1 and 2 |
+
+Set `--task gesture_object`, or set top-level `"task": "gesture_object"` in a
+model configuration. The CLI overrides that configuration field. Omitting it
+keeps gesture-only recognition. Models learn one joint class for each observed
+gesture/object combination, rather than two independent output heads. The
+current steps 1–3 annotations contain **9 gestures and 44 gesture–object pairs**.
+The output layer size is inferred from those labels. Existing
+`expected_class_count` / `expected_gesture_labels` still validate the raw
+gesture vocabulary; do not change the expected count from 9 to 44.
+
+`configs/protocol3.json` reserves these complete object trials for test:
+
+| Gestures | Training/validation objects | Test object |
+| --- | --- | --- |
+| approach, grasp, release, lift, move, place | 1–5 | 6 |
+| screw | 1 | 2 |
+| insert, deinsert | 3–4 | 5 |
+
+Insert/deinsert use three objects whose recorded IDs are **3, 4, 5**.
+The config lists actual IDs in `test_object_ids`; edit those lists to select
+different test objects. Removing an override uses the last available object
+within that gesture (numeric IDs are ordered numerically). Keep related
+gestures from the same subject/session/object/repetition in the same split;
+inconsistent rules are rejected.
+
+This evaluates **held-out objects within each gesture**. It does not mean an
+object is absent from all training gestures: object 5 can appear in training
+for grasp and in test for insert. All repetitions of each held-out pair are
+reserved for test before segmentation, window generation, or view expansion.
+Validation uses complete trials from the remaining objects. Its fraction/seed
+come from the existing model configuration's `training.validation` and
+`training.seed`; the default fraction is 0.2 of eligible training trials.
+Class coverage may require a slightly different realized fraction. The test
+fraction depends on each gesture's object count, rather than a fixed global
+percentage.
+
+For `gesture_object`, protocols 1/2 require every joint class in each active
+partition. Protocol 2 retains the existing screw/insert repetition rules and
+selects complete validation trials while retaining joint-class coverage.
+Consequently validation membership can differ from a gesture-only run even
+with the same fraction/seed. Protocol 3 with `gesture_object` is rejected:
+its held-out pairs would be classes absent from training. Such an experiment
+would require a separate zero-shot or compositional recognition design.
+
+Preprocessing, selected sensors/grids/views, optimizer, scheduler and checkpoint
+selection are unchanged. Selection uses validation macro F1 for the chosen
+target. Joint-task test accuracy requires **both gesture and object to match**;
+reports also include gesture-only and object-only accuracy/F1 derived from the
+joint predictions. Confusion matrices and per-class scores describe the 44
+pairs. Prediction CSVs include both pair labels and separate gesture/object
+columns. Joint run names include `gesture_object`; full settings and the label
+mapping remain in the existing compact run outputs and checkpoints.
+
+These options cover micro gestures from steps 1–3 only. The sibling macro
+project is not extended by this feature. Source recordings and annotations
+remain read-only.
+
+Protocol 3's `allow_within_subject_test_overlap: true` explicitly retains the
+accepted reused-interval policy. Some existing IMU/sEMG annotations use the
+same time interval under different object IDs (the initial split audit found
+18 IMU and 26 sEMG test-overlap warnings). These are warnings, including matching
+sEMG content, and the compact run configuration retains warning counts.
+Records/trial IDs crossing splits remain errors. The source annotations are
+never changed. Scores with reused train/test signals do not measure completely
+independent test signals. Set the protocol option to `false` for strict checks;
+for RGB/depth also disable the existing
+`data_quality.allow_within_subject_test_overlap` exception in the model config.
+
+
+From the repository root, prepare first or train using TSM or MVTN:
+
+```powershell
+# Gesture-only recognition on held-out objects
+python train_rgb.py --protocol protocol3 --model tsm --views front --prepare-only
+python train_rgb.py --protocol protocol3 --model tsm --views front --device cuda
+python train_depth.py --protocol protocol3 --model tsm --views front --device cuda
+
+# Gesture-object recognition with held-out repetitions
+python train_rgb.py --task gesture_object --protocol protocol2 --model tsm --views front --device cuda
+python train_depth.py --task gesture_object --protocol protocol2 --model tsm --views front --device cuda
+```
+
+Use `configs/protocol1.json` instead for participant holdout, or `--model mvtn`
+for the existing MVTN adapter. Camera selection and other training options
+remain available. Add `--prepare-only` to any normal command to validate it
+without optimization.
+
+## Protocol names and the unified protocol 2
+
+Use short names in training commands: `--protocol protocol1`, `--protocol protocol2`,
+or `--protocol protocol3`. Explicit JSON paths still work for custom configs.
+
+Both protocol 2 modes are controlled by `configs/protocol2.json`:
+
+```json
+"grouped_percentages": false,
+"split_percentages": {
+  "train": 70,
+  "validation": 15,
+  "test": 15
+},
+"split_seed": 42
+```
+
+- **false (default):** keep the existing train/test repetition IDs and gesture
+  overrides. The existing training validation settings apply. `split_percentages`
+  and `split_seed` are inactive.
+- **true:** shuffle and divide complete source trials according to
+  `split_percentages`. Repetition IDs no longer determine the partition.
+  Repetition rules and the model's validation fraction/strategy are inactive;
+  validation is already included in the three-way percentage split.
+
+Values must sum to 100; train and test must be positive, while validation may
+be zero. The split unit is (subject, session, object, original repetition),
+including all gestures and any screw excerpts from that trial. Groups are
+stratified by their target-class composition and pooled across participants.
+Every active partition must contain every target class; insufficient groups
+produce an explanatory error. This works for both `gesture` and
+`gesture_object`. Use protocol 1 for unseen-participant evaluation.
+
+The ratios target trial counts. Integer rounding and unequal trial lengths can
+make annotation/window counts differ from 70/15/15. The terminal and saved
+configuration show requested ratios and realized trial/annotation percentages;
+window/clip counts remain in the usual split summary. Input row order does not
+affect assignment. `split_seed` controls the shuffle; use matching annotations,
+task, selection and split settings across modalities for matching parent splits.
+
+The existing accepted-overlap policy is retained for percentage mode:
+`allow_within_subject_test_overlap: true` reports reused test intervals as
+warnings. This option does not change normal protocol 2's repetition policy.
+Models, filtering, optimization, and final evaluation are otherwise unchanged.
+
+There is no separate percentage configuration to maintain.
+`--protocol protocol2_percentages` remains a compatibility alias that reads
+this same protocol2.json and forces percentage mode for that invocation.
+For normal use, edit the boolean and always run `--protocol protocol2`.
+Percentage run names include the requested ratios and split seed.

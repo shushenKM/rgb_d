@@ -1,0 +1,37 @@
+{
+  "name": "protocol3",
+  "type": "held_out_objects",
+  "object_selection": "last_per_gesture",
+  "test_object_ids": {
+    "approach": [
+      "6"
+    ],
+    "grasp": [
+      "6"
+    ],
+    "insert": [
+      "5"
+    ],
+    "deinsert": [
+      "5"
+    ],
+    "lift": [
+      "6"
+    ],
+    "move": [
+      "6"
+    ],
+    "place": [
+      "6"
+    ],
+    "release": [
+      "6"
+    ],
+    "screw": [
+      "2"
+    ]
+  },
+  "validation": null,
+  "allow_within_subject_test_overlap": true,
+  "split_before_windowing": true
+}

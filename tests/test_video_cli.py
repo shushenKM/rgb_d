@@ -44,8 +44,10 @@ class VideoCliTests(unittest.TestCase):
         self.assertEqual(effective["views"], ["above"])
         self.assertEqual(effective["input"], {"num_frames": 4, "image_size": 64})
         self.assertEqual(effective["training"]["batch_size"], 2)
-        self.assertEqual(json.loads((self.run / "state.json").read_text())["state"], "prepared")
-        self.assertTrue((self.run / "protocol2/test_samples.json").exists())
+        saved = json.loads((self.run / "config.json").read_text())
+        self.assertEqual(saved["status"], "prepared")
+        self.assertEqual(saved["preparation"]["label_mapping"], {"example": 0})
+        self.assertEqual({p.name for p in self.run.iterdir()}, {"config.json"})
 
     def test_read_only_and_entrypoint_mismatch_rejected_before_run(self):
         for config, dataset in [(dict(self.config, modality="depth"), self.dataset),

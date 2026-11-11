@@ -75,7 +75,8 @@ class PlotTests(unittest.TestCase):
     def test_plot_failure_is_separate_and_paths_cannot_escape_runs(self):
         with patch.object(plots, "generate_fold_report", side_effect=ImportError("matplotlib missing")), contextlib.redirect_stderr(io.StringIO()) as terminal:
             self.assertIsNone(plots.save_training_report(self.fold))
-        self.assertEqual(json.loads((self.fold / "plot_status.json").read_text())["status"], "failed")
+        self.assertIn("matplotlib missing", (self.fold / "plot_error.txt").read_text())
+        self.assertFalse((self.fold / "plot_status.json").exists())
         self.assertIn("Training results are saved", terminal.getvalue())
         self.assertTrue((self.fold / "result.json").is_file())
         with self.assertRaises(ValueError):

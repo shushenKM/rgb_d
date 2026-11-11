@@ -83,11 +83,10 @@ class VideoTrainingTests(unittest.TestCase):
 
     def test_artifacts_and_terminal_report(self):
         result, terminal = self.run_training()
-        for name in ("best.pt", "last.pt", "history.csv", "test_metrics.json", "confusion_matrix.csv",
-                     "predictions.csv", "environment.json", "model.json", "result.json", "test_samples.json",
-                     "train_samples.json", "validation_samples.json", "protocol.json", "split_summary.json"):
+        for name in ("best.pt", "last.pt", "history.csv", "confusion_matrix.csv",
+                     "predictions.csv", "result.json"):
             self.assertTrue((self.output / name).is_file(), name)
-        self.assertEqual(json.loads((self.output / "plot_status.json").read_text())["status"], "complete")
+        self.assertEqual({p.name for p in self.output.glob("*.json")}, {"result.json"})
         self.assertTrue((self.output / "report.html").is_file())
         self.assertIn("Final test results: invented", terminal)
         self.assertIn("Confusion matrix", terminal)
@@ -99,6 +98,26 @@ class VideoTrainingTests(unittest.TestCase):
         payload = torch.load(self.output / "best.pt", weights_only=True)
         self.assertEqual(payload["label_mapping"], self.mapping)
         self.assertEqual(payload["config"]["modality"], "rgb")
+
+    def test_joint_task_reaches_checkpoint_predictions_and_report(self):
+        self.mapping = {"alpha::object=1": 0, "alpha::object=2": 1}
+        self.config["task"] = "gesture_object"
+        for items in self.fold["splits"].values():
+            for item in items:
+                item["gesture_label"] = "alpha"
+                item["object_id"] = str(item["label"] + 1)
+        result, terminal = self.run_training()
+        self.assertEqual(result["test_metrics"]["task"], "gesture_object")
+        self.assertIn("Gesture component:", terminal)
+        self.assertIn("Object component:", terminal)
+        payload = torch.load(self.output / "best.pt", weights_only=True)
+        self.assertEqual(payload["config"]["task"], "gesture_object")
+        self.assertEqual(payload["label_mapping"], self.mapping)
+        with (self.output / "predictions.csv").open(newline="", encoding="utf-8") as stream:
+            rows = list(csv.DictReader(stream))
+        self.assertEqual([r["target_object"] for r in rows], ["1", "2"])
+        self.assertEqual({r["target_gesture"] for r in rows}, {"alpha"})
+        self.assertEqual(rows[0]["target_label"], "alpha::object=1")
 
     def test_selection_uses_validation_and_test_is_only_evaluated_once(self):
         original = training.evaluate
@@ -136,7 +155,7 @@ class VideoTrainingTests(unittest.TestCase):
         self.assertEqual(result["selected_checkpoint"], "last.pt")
         self.assertEqual(result["selected_epoch"], 2)
         self.assertEqual(result["selection"], "last_epoch_no_validation")
-        info = json.loads((self.output / "model.json").read_text())
+        info = result["training_details"]["model"]
         self.assertFalse(info["scheduler"]["active"])
         self.assertFalse((self.output / "best.pt").exists())
 

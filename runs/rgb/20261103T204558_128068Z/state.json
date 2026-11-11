@@ -1,0 +1,6 @@
+{
+  "state": "failed",
+  "synthetic": false,
+  "error_type": "ModuleNotFoundError",
+  "message": "No module named 'cv2'"
+}

@@ -1,6 +1,21 @@
+# Python-generated files
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .venv/
-runs/**
-!runs/.gitkeep
+
+# Publish experiment runs; keep scratch files and caches local.
+/runs/*
+!/runs/README.md
+!/runs/.gitkeep
+!/runs/rgb/
+!/runs/depth/
+/runs/*/unittest_*/
+/runs/*/*_test_*/
+/runs/*/test_*/
+/runs/*/*_synthetic*/
+/runs/*/*_smoke_*/
+/runs/**/__pycache__/
+/runs/**/*.tmp
+/runs/**/*.npz
+/runs/**/*.npy

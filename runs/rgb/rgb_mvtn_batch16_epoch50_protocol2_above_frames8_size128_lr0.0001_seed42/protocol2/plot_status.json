@@ -1,0 +1,15 @@
+{
+  "status": "complete",
+  "report": "report.html",
+  "plots": [
+    "loss",
+    "accuracy",
+    "validation_f1",
+    "learning_rate",
+    "epoch_duration",
+    "confusion_matrix",
+    "confusion_matrix_normalized",
+    "per_gesture_scores",
+    "test_support"
+  ]
+}

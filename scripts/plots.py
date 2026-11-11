@@ -2,8 +2,8 @@
 
 Automatically called after checkpoint selection and final test evaluation.
 Reads only history.csv/result.json in a completed fold; never evaluates a model.
-Writes plots/*.png (screen/report use), plots/*.svg (vector export), report.html,
-and plot_status.json. Multi-fold run reports compare scores without averaging
+Writes plots/*.png (screen/report use), plots/*.svg (vector export), and report.html.
+Plot failures alone create plot_error.txt. Multi-fold reports compare scores without averaging
 learning curves of different lengths. Test scores are final-checkpoint results,
 not per-epoch curves; the selected epoch is marked on training curves.
 
@@ -43,10 +43,6 @@ def _target(folder, name):
     if target.resolve().parent != folder.resolve():
         raise ValueError("Plot/report files must not redirect outside their output folder")
     return target
-
-
-def _write_json(folder, name, value):
-    _target(folder, name).write_text(json.dumps(value, indent=2, allow_nan=False) + "\n", encoding="utf-8")
 
 
 def _read(folder, name):
@@ -119,12 +115,13 @@ def _curve(rows, fields, title, ylabel, selected_epoch, folder, stem, percent=Fa
 
 def _confusion(metrics, folder, normalized=False):
     names, counts = metrics["class_names"], metrics["confusion_matrix"]
+    target = "gesture-object pair" if metrics.get("task") == "gesture_object" else "gesture"
     matrix = normalized_confusion(counts) if normalized else counts
     size = max(7, len(names) * .65 + 2)
     fig, ax = _figure(size, size * .85)
     maximum = 100 if normalized else max(1, max(max(row) for row in counts))
     im = ax.imshow(matrix, cmap="Blues", vmin=0, vmax=maximum)
-    fig.colorbar(im, ax=ax, label="% within true gesture" if normalized else "Test examples", shrink=.8)
+    fig.colorbar(im, ax=ax, label="% within true " + target if normalized else "Test examples", shrink=.8)
     ax.set_xticks(range(len(names)), names, rotation=45, ha="right", rotation_mode="anchor")
     ax.set_yticks(range(len(names)), names)
     for row in range(len(names)):
@@ -133,13 +130,14 @@ def _confusion(metrics, folder, normalized=False):
             label = "{:.1f}%".format(value) if normalized else str(value)
             ax.text(col, row, label, ha="center", va="center", fontsize=8,
                     color="white" if value > maximum * .55 else "#172033")
-    ax.set(xlabel="Predicted gesture", ylabel="True gesture",
+    ax.set(xlabel="Predicted " + target, ylabel="True " + target,
            title="Final test confusion matrix" + (" — row-normalized" if normalized else " — counts"))
     _save(fig, folder, "confusion_matrix_normalized" if normalized else "confusion_matrix")
 
 
 def _class_plots(metrics, folder):
     names = metrics["class_names"]
+    target = "gesture-object pair" if metrics.get("task") == "gesture_object" else "gesture"
     fig, ax = _figure(max(9, len(names) * .8), 5)
     for offset, (key, label, color) in enumerate((("precision", "Precision", "#2563eb"),
                                                 ("recall", "Recall", "#d97706"),
@@ -148,7 +146,7 @@ def _class_plots(metrics, folder):
                [100 * metrics["per_class"][name][key] for name in names],
                width=.25, label=label, color=color)
     ax.set_xticks(range(len(names)), names, rotation=35, ha="right")
-    ax.set(ylim=(0, 105), ylabel="Score (%)", title="Final test scores by gesture")
+    ax.set(ylim=(0, 105), ylabel="Score (%)", title="Final test scores by " + target)
     ax.legend()
     ax.grid(axis="y", alpha=.2)
     _save(fig, folder, "per_gesture_scores")
@@ -157,7 +155,7 @@ def _class_plots(metrics, folder):
     ax.bar_label(bars, padding=3)
     ax.tick_params(axis="x", rotation=35)
     ax.margins(y=.18)
-    ax.set(ylabel="Test examples", title="Test support by gesture")
+    ax.set(ylabel="Test examples", title="Test support by " + target)
     _save(fig, folder, "test_support")
 
 
@@ -211,9 +209,14 @@ def generate_fold_report(output_dir):
              "Zero-support classes have zero scores and zero normalized confusion rows. Missing historical columns are marked unavailable.").format(
         metrics["accuracy"], metrics["macro_f1"], metrics["weighted_f1"], metrics["sample_count"],
         result.get("selected_checkpoint", "unknown"), selected, result.get("epochs_completed", len(rows)))
+    if metrics.get("task") == "gesture_object":
+        intro = "Task: gesture-object recognition (exact pair scores).\n" + intro
+        for component, scores in metrics.get("component_metrics", {}).items():
+            intro += " | {} component: accuracy {:.2%}, macro F1 {:.2%}".format(
+                component.capitalize(), scores["accuracy"], scores["macro_f1"])
+        figures = [(stem, label.replace("Per-gesture", "Per-pair").replace("per gesture", "per pair"))
+                   for stem, label in figures]
     _html_report(output, "Training report — " + result.get("name", output.name), intro, figures)
-    _write_json(output, "plot_status.json", {"status": "complete", "report": "report.html",
-                                            "plots": [stem for stem, _ in figures]})
     return output / "report.html"
 
 
@@ -250,10 +253,8 @@ def generate_run_report(run_dir, results=None):
         plots = [("fold_comparison", "Final test results across folds")]
     intro = "{} completed fold(s). Open a fold below for learning curves and test diagnostics.\nFold comparisons use unweighted mean and population standard deviation; they are not pooled test scores.".format(len(results))
     if len(links) < len(results):
-        intro += "\nSome fold reports are unavailable; see plot_status.json in those folders."
+        intro += "\nSome fold reports are unavailable; see terminal output or plot_error.txt in those folders."
     _html_report(run, "Experiment report — " + run.name, intro, plots, links)
-    _write_json(run, "plot_status.json", {"status": "complete" if len(links) == len(results) else "partial",
-                                         "report": "report.html", "fold_reports": len(links)})
     return run / "report.html"
 
 
@@ -266,7 +267,7 @@ def save_training_report(output_dir, *, results=None):
         return report
     except Exception as error:
         try:
-            _write_json(output, "plot_status.json", {"status": "failed", "error": str(error)})
+            _target(output, "plot_error.txt").write_text(str(error) + "\n", encoding="utf-8")
         except OSError:
             pass
         print("Plot generation failed: {}. Training results are saved. Retry with python -m scripts.plots --run \"{}\"".format(

@@ -10,6 +10,9 @@ from copy import deepcopy
 import math
 import random
 
+from scripts.tasks import label_of
+from scripts.protocol_config import normalize_protocol
+
 from scripts.protocols import (
     PARTITIONS,
     SplitValidationError,
@@ -29,13 +32,14 @@ def _finish(result, allow_train_validation_overlap=False):
             "segments": len(result[part]),
             "subjects": sorted({record["subject_id"] for record in result[part]}),
             "gesture_counts": dict(sorted(Counter(record["gesture_label"] for record in result[part]).items())),
+            "class_counts": dict(sorted(Counter(label_of(record) for record in result[part]).items())),
         }
         for part in PARTITIONS
     }
     result["issues"] = validate_split(result, allow_train_validation_overlap=allow_train_validation_overlap)
-    labels = {record["gesture_label"] for part in PARTITIONS for record in result[part]}
+    labels = {label_of(record) for part in PARTITIONS for record in result[part]}
     if result["validation"]:
-        missing = sorted(labels.difference(record["gesture_label"] for record in result["validation"]))
+        missing = sorted(labels.difference(label_of(record) for record in result["validation"]))
         if missing:
             result["issues"].append({
                 "code": "missing_validation_class_coverage", "severity": "error",
@@ -81,7 +85,7 @@ def _select_validation_groups(groups, labels, fraction, seed):
     keys = sorted(groups)
     if len(keys) < 2:
         raise ValueError("Grouped validation needs at least two distinct training trials.")
-    classes = {key: {record["gesture_label"] for record in groups[key]} for key in keys}
+    classes = {key: {label_of(record) for record in groups[key]} for key in keys}
     label_groups = {label: {key for key in keys if label in classes[key]} for label in labels}
     rare = sorted(label for label, choices in label_groups.items() if len(choices) < 2)
     if rare:
@@ -149,7 +153,17 @@ def build_training_splits(records, protocol_config, validation_config=None, seed
         raise ValueError("Cannot build training splits from empty records.")
     if not isinstance(protocol_config, dict):
         raise ValueError("Protocol configuration must be an object.")
-    config = deepcopy(protocol_config)
+    config = normalize_protocol(protocol_config)
+    if config.get("type") == "grouped_percentages":
+        from scripts.percentage_splits import make_percentage_split
+        settings = validation_config if validation_config is not None else config.get("validation")
+        settings = settings or {}
+        if not isinstance(settings, dict):
+            raise ValueError("Validation configuration must be an object")
+        allow_overlap = settings.get("allow_train_validation_overlap", False)
+        result = make_percentage_split(records, config, seed=seed,
+                                       allow_train_validation_overlap=allow_overlap)
+        return [_finish(result, allow_overlap)]
     validation = _validation_settings(config, validation_config, seed)
     config["validation"] = None  # The low-level API accepts explicit IDs only.
     strategy = validation["strategy"]
@@ -183,11 +197,11 @@ def build_training_splits(records, protocol_config, validation_config=None, seed
             results.append(_finish(result, allow_overlap))
         return results
 
-    if protocol_type == "held_out_repetitions":
+    if protocol_type in ("held_out_repetitions", "held_out_objects"):
         if strategy not in ("grouped_trials", "none"):
-            raise ValueError("Repetition validation strategy must be 'auto', 'grouped_trials', or 'none'.")
+            raise ValueError("Validation strategy must be 'auto', 'grouped_trials', or 'none'.")
         result = make_split_from_config(records, config, strict=False)
-        result["name"] = config.get("name", "protocol2")
+        result["name"] = config.get("name", "protocol3" if protocol_type == "held_out_objects" else "protocol2")
         _finish(result, allow_overlap)
         if result["validation"]:
             if strategy == "none":
@@ -203,7 +217,7 @@ def build_training_splits(records, protocol_config, validation_config=None, seed
         groups = defaultdict(list)
         for record in result["train"]:
             groups[_trial(record)].append(record)
-        labels = {record["gesture_label"] for part in PARTITIONS for record in result[part]}
+        labels = {label_of(record) for part in PARTITIONS for record in result[part]}
         selected, target = _select_validation_groups(groups, labels, fraction, validation["seed"])
         original_train = result["train"]
         result["validation"] = [record for record in original_train if _trial(record) in selected]

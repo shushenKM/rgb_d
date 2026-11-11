@@ -15,6 +15,11 @@ PROTOCOL 2: HELD-OUT REPETITIONS
     (subject, session/step, object, repetition) stay in one partition. Any
     unassigned repetitions remain explicitly visible in the 'excluded' list.
 
+PROTOCOL 3: HELD-OUT OBJECTS
+    Protocol 3 holds out complete objects within each gesture. The optional
+    allow_within_subject_test_overlap flag retains accepted interval reuse as
+    warnings, while duplicate record/trial assignments remain errors.
+
 SCREW SEGMENTS
     Each long parent contains repeated screws. Consecutive non-overlapping
     fixed-duration excerpts are made by the IMU sampling stage. This module
@@ -51,6 +56,8 @@ generation, training, file writing, or source-data modification in this module.
 from collections import Counter, defaultdict
 from copy import deepcopy
 import math
+
+from scripts.tasks import label_of
 
 
 PARTITIONS = ("train", "validation", "test", "excluded")
@@ -89,10 +96,13 @@ def validate_split(result, *, allow_train_validation_overlap=False):
     """Return partition and temporal-overlap issues without changing any records."""
     if type(allow_train_validation_overlap) is not bool:
         raise ValueError("allow_train_validation_overlap must be a boolean.")
+    allow_test_overlap = result.get("metadata", {}).get("allow_within_subject_test_overlap", False)
+    if type(allow_test_overlap) is not bool:
+        raise ValueError("allow_within_subject_test_overlap must be a boolean.")
     issues = []
     def add(code, message, severity="error", **details):
         issues.append(dict(details, code=code, severity=severity, message=message))
-    source_labels = {record["gesture_label"] for part in PARTITIONS for record in result[part]}
+    source_labels = {label_of(record) for part in PARTITIONS for record in result[part]}
     seen_ids = {}
     seen_trials = {}
     interval_groups = defaultdict(list)
@@ -114,7 +124,7 @@ def validate_split(result, *, allow_train_validation_overlap=False):
                         or not math.isfinite(end) or not 0 <= start < end):
                     continue
                 interval_groups[(record["subject_id"], record["session_id"], timeline)].append((start, end, part, record_id))
-        labels = {record["gesture_label"] for record in result[part]}
+        labels = {label_of(record) for record in result[part]}
         if part in ("train", "test"):
             if not result[part]:
                 add("empty_partition", "{} is empty.".format(part), partition=part)
@@ -133,7 +143,8 @@ def validate_split(result, *, allow_train_validation_overlap=False):
         for start, end, part, record_id in sorted(intervals):
             for other, (other_end, other_id) in active.items():
                 if part != other and start < other_end:
-                    allowed = allow_train_validation_overlap and {part, other} == {"train", "validation"}
+                    allowed = ((allow_train_validation_overlap and {part, other} == {"train", "validation"})
+                               or (allow_test_overlap and "test" in (part, other)))
                     add("overlapping_intervals", "Source time intervals overlap across {} and {}.".format(other, part),
                         severity="warning" if allowed else "error",
                         partitions=[other, part], allowed_by_configuration=allowed,
@@ -150,6 +161,7 @@ def _finish(result, strict):
             "segments": len(result[part]),
             "subjects": sorted({record["subject_id"] for record in result[part]}),
             "gesture_counts": dict(sorted(Counter(record["gesture_label"] for record in result[part]).items())),
+            "class_counts": dict(sorted(Counter(label_of(record) for record in result[part]).items())),
         } for part in PARTITIONS
     }
     result["issues"] = validate_split(result)
@@ -234,6 +246,52 @@ def make_repetition_split(records, train_repetitions, test_repetitions,
     return _finish(result, strict)
 
 
+def make_object_split(records, *, test_object_ids=None, allow_within_subject_test_overlap=False, strict=True):
+    """Protocol 3: hold out the last available object within each gesture.
+
+    Numeric IDs are ordered numerically. An optional mapping from each gesture
+    to one or more object IDs overrides the default. All its repetitions go to
+    test; validation is subsequently selected from the remaining training trials.
+    This is a per-gesture holdout, not a globally unseen-object guarantee.
+    """
+    records = _records(records)
+    if type(allow_within_subject_test_overlap) is not bool:
+        raise ValueError("allow_within_subject_test_overlap must be a boolean.")
+    if any(label_of(record) != record["gesture_label"] for record in records):
+        raise ValueError("Protocol 3 supports gesture-only targets, not gesture_object")
+    available = defaultdict(set)
+    for record in records:
+        available[record["gesture_label"]].add(record["object_id"])
+    if test_object_ids is not None and not isinstance(test_object_ids, dict):
+        raise ValueError("test_object_ids must map gesture names to lists of object IDs")
+    overrides = test_object_ids or {}
+    unknown = set(overrides).difference(available)
+    if unknown:
+        raise ValueError("Unknown gestures in test_object_ids: {}".format(sorted(unknown)))
+    selected = {}
+    for gesture, objects in sorted(available.items()):
+        if len(objects) < 2:
+            raise ValueError("Object holdout requires at least two objects for {}".format(gesture))
+        ordered = sorted(objects, key=lambda value: (0, int(value), value) if value.isdecimal() else (1, value))
+        values = overrides.get(gesture, [ordered[-1]])
+        if (not isinstance(values, list) or not values
+                or any(not isinstance(value, str) for value in values)
+                or len(values) != len(set(values))):
+            raise ValueError("Held-out object IDs must be nonempty lists of unique strings")
+        held = set(values)
+        if not held.issubset(objects) or held == objects:
+            raise ValueError("Held-out IDs must exist and retain training objects for {}".format(gesture))
+        selected[gesture] = sorted(held)
+    result = {part: [] for part in PARTITIONS}
+    result["metadata"] = dict(protocol="protocol3", type="held_out_objects",
+                              scope="within_gesture", test_object_ids=selected,
+                              allow_within_subject_test_overlap=allow_within_subject_test_overlap)
+    for record in records:
+        part = "test" if record["object_id"] in selected[record["gesture_label"]] else "train"
+        result[part].append(record)
+    return _finish(result, strict)
+
+
 def make_split_from_config(records, config, test_subject_id=None,
                            validation_subject_id=None, strict=True):
     """Dispatch a loaded protocol JSON configuration to its explicit split rule."""
@@ -241,6 +299,13 @@ def make_split_from_config(records, config, test_subject_id=None,
         raise ValueError("Protocols must assign source trials before windowing.")
     if config.get("validation") is not None:
         raise ValueError("Configure validation through explicit subject/repetition IDs.")
+    if config.get("type") == "held_out_objects":
+        if config.get("object_selection", "last_per_gesture") != "last_per_gesture":
+            raise ValueError("object_selection must be last_per_gesture; override with test_object_ids")
+        return make_object_split(
+            records, test_object_ids=config.get("test_object_ids"),
+            allow_within_subject_test_overlap=config.get("allow_within_subject_test_overlap", False),
+            strict=strict)
     if config.get("type") == "leave_one_subject_out":
         return make_subject_split(
             records, test_subject_id if test_subject_id is not None else config.get("test_subject_id"),

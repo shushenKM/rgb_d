@@ -1,0 +1,413 @@
+[
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "1Alice",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "1Alice/annotation/rgb_depth_gesture_segments1_EN.csv:324",
+    "related_record_id": "1Alice/annotation/rgb_depth_gesture_segments1_EN.csv:321",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "1Alice",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "1Alice/annotation/rgb_depth_gesture_segments1_EN.csv:325",
+    "related_record_id": "1Alice/annotation/rgb_depth_gesture_segments1_EN.csv:322",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "4Chenrui",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "4Chenrui/annotation/rgb_depth_gesture_segments4_EN.csv:292",
+    "related_record_id": "4Chenrui/annotation/rgb_depth_gesture_segments4_EN.csv:307",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "4Chenrui",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "4Chenrui/annotation/rgb_depth_gesture_segments4_EN.csv:293",
+    "related_record_id": "4Chenrui/annotation/rgb_depth_gesture_segments4_EN.csv:308",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "4Chenrui",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "4Chenrui/annotation/rgb_depth_gesture_segments4_EN.csv:310",
+    "related_record_id": "4Chenrui/annotation/rgb_depth_gesture_segments4_EN.csv:295",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "4Chenrui",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "4Chenrui/annotation/rgb_depth_gesture_segments4_EN.csv:311",
+    "related_record_id": "4Chenrui/annotation/rgb_depth_gesture_segments4_EN.csv:296",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "4Chenrui",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "4Chenrui/annotation/rgb_depth_gesture_segments4_EN.csv:346",
+    "related_record_id": "4Chenrui/annotation/rgb_depth_gesture_segments4_EN.csv:331",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "4Chenrui",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "4Chenrui/annotation/rgb_depth_gesture_segments4_EN.csv:347",
+    "related_record_id": "4Chenrui/annotation/rgb_depth_gesture_segments4_EN.csv:332",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "4Chenrui",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "4Chenrui/annotation/rgb_depth_gesture_segments4_EN.csv:363",
+    "related_record_id": "4Chenrui/annotation/rgb_depth_gesture_segments4_EN.csv:378",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "4Chenrui",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "4Chenrui/annotation/rgb_depth_gesture_segments4_EN.csv:364",
+    "related_record_id": "4Chenrui/annotation/rgb_depth_gesture_segments4_EN.csv:379",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "5Imad",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "5Imad/annotation/rgb_depth_gesture_segments5_EN.csv:293",
+    "related_record_id": "5Imad/annotation/rgb_depth_gesture_segments5_EN.csv:296",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "test",
+      "train"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "5Imad",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "5Imad/annotation/rgb_depth_gesture_segments5_EN.csv:350",
+    "related_record_id": "5Imad/annotation/rgb_depth_gesture_segments5_EN.csv:353",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across test and train.",
+    "accepted_policy": "data_quality.allow_within_subject_test_overlap",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "test",
+      "train"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "6Jeremy",
+    "session_id": "step1",
+    "timeline": "above",
+    "record_id": "6Jeremy/annotation/rgb_depth_gesture_segments6_EN.csv:15",
+    "related_record_id": "6Jeremy/annotation/rgb_depth_gesture_segments6_EN.csv:19",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across test and train.",
+    "accepted_policy": "data_quality.allow_within_subject_test_overlap",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "6Jeremy",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "6Jeremy/annotation/rgb_depth_gesture_segments6_EN.csv:363",
+    "related_record_id": "6Jeremy/annotation/rgb_depth_gesture_segments6_EN.csv:360",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "6Jeremy",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "6Jeremy/annotation/rgb_depth_gesture_segments6_EN.csv:364",
+    "related_record_id": "6Jeremy/annotation/rgb_depth_gesture_segments6_EN.csv:361",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "7Shushen",
+    "session_id": "step2",
+    "timeline": "above",
+    "record_id": "7Shushen/annotation/rgb_depth_gesture_segments7_EN.csv:221",
+    "related_record_id": "7Shushen/annotation/rgb_depth_gesture_segments7_EN.csv:216",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "7Shushen",
+    "session_id": "step2",
+    "timeline": "above",
+    "record_id": "7Shushen/annotation/rgb_depth_gesture_segments7_EN.csv:222",
+    "related_record_id": "7Shushen/annotation/rgb_depth_gesture_segments7_EN.csv:217",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "7Shushen",
+    "session_id": "step2",
+    "timeline": "above",
+    "record_id": "7Shushen/annotation/rgb_depth_gesture_segments7_EN.csv:223",
+    "related_record_id": "7Shushen/annotation/rgb_depth_gesture_segments7_EN.csv:218",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "7Shushen",
+    "session_id": "step2",
+    "timeline": "above",
+    "record_id": "7Shushen/annotation/rgb_depth_gesture_segments7_EN.csv:224",
+    "related_record_id": "7Shushen/annotation/rgb_depth_gesture_segments7_EN.csv:219",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "8Yang",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "8Yang/annotation/rgb_depth_gesture_segments8_EN.csv:305",
+    "related_record_id": "8Yang/annotation/rgb_depth_gesture_segments8_EN.csv:321",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "8Yang",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "8Yang/annotation/rgb_depth_gesture_segments8_EN.csv:306",
+    "related_record_id": "8Yang/annotation/rgb_depth_gesture_segments8_EN.csv:322",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "8Yang",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "8Yang/annotation/rgb_depth_gesture_segments8_EN.csv:337",
+    "related_record_id": "8Yang/annotation/rgb_depth_gesture_segments8_EN.csv:353",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "8Yang",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "8Yang/annotation/rgb_depth_gesture_segments8_EN.csv:338",
+    "related_record_id": "8Yang/annotation/rgb_depth_gesture_segments8_EN.csv:354",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "8Yang",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "8Yang/annotation/rgb_depth_gesture_segments8_EN.csv:388",
+    "related_record_id": "8Yang/annotation/rgb_depth_gesture_segments8_EN.csv:372",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "partitions": [
+      "train",
+      "validation"
+    ],
+    "allowed_by_configuration": true,
+    "subject_id": "8Yang",
+    "session_id": "step3",
+    "timeline": "above",
+    "record_id": "8Yang/annotation/rgb_depth_gesture_segments8_EN.csv:389",
+    "related_record_id": "8Yang/annotation/rgb_depth_gesture_segments8_EN.csv:373",
+    "code": "overlapping_intervals",
+    "severity": "warning",
+    "message": "Source time intervals overlap across train and validation.",
+    "fold": "protocol2"
+  },
+  {
+    "subject_id": "8Yang",
+    "session_id": "step1",
+    "view": "above",
+    "count": 2075,
+    "code": "missing_depth_outside_or_inside_annotations",
+    "message": "Recording contains absent depth frames; selected clip frames are checked separately",
+    "severity": "warning"
+  }
+]

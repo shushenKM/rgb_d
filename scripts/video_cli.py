@@ -10,6 +10,9 @@ source recordings or annotation folders and never starts training on import.
 import argparse
 import copy
 import sys
+from scripts.tasks import TASKS, validate_task
+from scripts.protocol_config import normalize_protocol, percentage_settings, resolve_protocol_reference
+from scripts.run_output import preparation_summary, save_run_error, update_run_config
 
 from scripts.artifacts import PROJECT_ROOT, create_run_directory, experiment_run_name, fold_directory, read_config, write_json
 
@@ -18,12 +21,16 @@ def train_video(modality, config_path, protocol_path, *, prepare_only=False,
                 model=None, views=None, subjects=None, test_subject=None,
                 validation_subject=None, epochs=None, device=None, batch_size=None,
                 frames=None, image_size=None, workers=None, backbone_weights=None,
-                run_name=None):
+                run_name=None, task=None):
     """Prepare and optionally train the requested modality; return its run path."""
     if modality not in ("rgb", "depth"):
         raise ValueError("modality must be rgb or depth")
     config = copy.deepcopy(read_config(config_path))
-    protocol = copy.deepcopy(read_config(protocol_path))
+    protocol_file, force_percentages = resolve_protocol_reference(protocol_path)
+    protocol = normalize_protocol(read_config(protocol_file), force_percentages=force_percentages)
+    if protocol.get("type") == "grouped_percentages":
+        percentage_settings(protocol, config.get("training", {}).get("seed", 42))
+    config["task"] = validate_task(task if task is not None else config.get("task", "gesture"), protocol)
     if config.get("modality") != modality:
         raise ValueError("This entry point requires a {} configuration".format(modality))
     dataset = read_config(config.get("dataset_config", "configs/dataset.json"))
@@ -55,34 +62,36 @@ def train_video(modality, config_path, protocol_path, *, prepare_only=False,
         modality=modality, default_name=experiment_run_name(
             modality, config, protocol, prepare_only=prepare_only))
     write_json(run / "config.json", {modality: config, "dataset": dataset, "protocol": protocol})
-    write_json(run / "state.json", {"state": "preparing", "synthetic": False})
+    update_run_config(run, status="preparing", synthetic=False)
     print("Preparing {} | model={} | views={} | protocol={}".format(
         modality.upper(), config["model"], ",".join(config.get("views", [])), protocol.get("name", protocol.get("type"))), flush=True)
     try:
         from vision.dataset import prepare_video_dataset
         prepared = prepare_video_dataset(dataset, config, protocol)
-        write_json(run / "issues.json", prepared.get("issues", []))
-        write_json(run / "recording_manifest.json", prepared.get("manifest", []))
-        write_json(run / "labels.json", prepared["label_mapping"])
+        print("Task: {} | {} classes".format(config["task"], len(prepared["label_mapping"])), flush=True)
+        update_run_config(run, preparation=preparation_summary(
+            prepared.get("folds", []), prepared.get("issues", []), prepared["label_mapping"]))
         warnings = [item for item in prepared.get("issues", []) if item.get("severity") == "warning"]
         if warnings:
             from collections import Counter
             counts = Counter(item["code"] for item in warnings)
-            print("Preparation warnings (details in issues.json): {}".format(
+            print("Preparation warnings: {}".format(
                 ", ".join("{}={}".format(key, value) for key, value in sorted(counts.items()))), flush=True)
         if not prepared.get("valid", True) or not prepared.get("folds"):
             raise ValueError("Preparation did not produce valid nonempty folds")
-        from vision.training import save_prepared_fold
         results = []
         for fold in prepared["folds"]:
-            output = fold_directory(run, fold["name"])
-            save_prepared_fold(fold, output)
+            from scripts.percentage_splits import percentage_split_summary
+            split_summary = percentage_split_summary(fold.get("protocol_metadata", {}))
+            if split_summary:
+                print("{}: {}".format(fold["name"], split_summary), flush=True)
             counts = {part: len(fold["splits"][part]) for part in ("train", "validation", "test")}
             print("{}: train={}, validation={}, test={} gesture samples".format(
                 fold["name"], counts["train"], counts["validation"], counts["test"]), flush=True)
             if not prepare_only:
                 from vision.training import train_fold
-                write_json(run / "state.json", {"state": "training", "synthetic": False, "fold": fold["name"]})
+                output = fold_directory(run, fold["name"])
+                update_run_config(run, status="training", current_fold=fold["name"])
                 results.append(train_fold(fold, prepared["label_mapping"], config, output, prepared["dataset_root"]))
                 write_json(run / "results.json", results)
         if results:
@@ -95,17 +104,10 @@ def train_video(modality, config_path, protocol_path, *, prepare_only=False,
                 print("\nFinal test results across {} folds (mean +/- standard deviation):".format(len(results)))
                 for key, title in (("accuracy", "Accuracy"), ("macro_f1", "Macro F1"), ("weighted_f1", "Weighted F1")):
                     print("{}: {:.2%} +/- {:.2%}".format(title, aggregate[key]["mean"], aggregate[key]["std"]), flush=True)
-        write_json(run / "state.json", {"state": "prepared" if prepare_only else "complete", "synthetic": False,
-                                        "fold_count": len(prepared["folds"])})
+        update_run_config(run, status="prepared" if prepare_only else "complete", current_fold=None)
         return run
     except Exception as error:
-        for attribute, filename in (("issues", "issues.json"), ("manifest", "recording_manifest.json")):
-            if hasattr(error, attribute):
-                write_json(run / filename, getattr(error, attribute))
-        if hasattr(error, "result"):
-            write_json(run / "split_error.json", error.result)
-        write_json(run / "state.json", {"state": "failed", "synthetic": False,
-                                        "error_type": type(error).__name__, "message": str(error)})
+        save_run_error(run, error)
         print("Review this run: {}".format(run.relative_to(PROJECT_ROOT)), file=sys.stderr)
         raise
 
@@ -114,8 +116,9 @@ def main(modality="rgb", argv=None):
     """Parse overrides for the root train_rgb.py or train_depth.py script."""
     parser = argparse.ArgumentParser(description="Prepare/train {} gesture recognition using TSM or MVTN".format(modality.upper()))
     parser.add_argument("--config", default="configs/" + modality + ".json")
-    parser.add_argument("--protocol", required=True, help="configs/protocol1.json or configs/protocol2.json")
-    parser.add_argument("--prepare-only", action="store_true", help="Validate recordings and splits; save manifests without model optimization")
+    parser.add_argument("--protocol", required=True, help="protocol1, protocol2, protocol3, or a protocol JSON path")
+    parser.add_argument("--task", choices=TASKS, help="Classification target; default gesture (or task in config)")
+    parser.add_argument("--prepare-only", action="store_true", help="Validate recordings and splits; save a compact summary without model optimization")
     parser.add_argument("--model", choices=("tsm", "mvtn"))
     parser.add_argument("--views", nargs="+", choices=("front", "above", "left", "right"), help="One view or multiple views with shared model weights and averaged logits")
     parser.add_argument("--subjects", nargs="+", help="Optional subject subset; default uses configured/all subjects")

@@ -6,6 +6,7 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+from unittest.mock import patch
 import tempfile
 import unittest
 
@@ -47,6 +48,44 @@ def make_annotation(path, rows):
 
 
 class VideoDataTests(unittest.TestCase):
+    def test_joint_and_object_holdout_with_rgb_and_depth_preparation(self):
+        from scripts.rgbd_annotations import read_dataset_rgbd_annotations
+        from scripts.tasks import joint_label
+        source = read_dataset_rgbd_annotations(self.root, self.dataset)
+        # Reuse synthetic recordings only. Offset the second object's intervals;
+        # allow overlaps explicitly, as the existing dataset fixture is short.
+        rows = []
+        for record in source:
+            for obj in ("1", "2"):
+                item = deepcopy(record)
+                item.update(object_id=obj, record_id=record["record_id"] + "-obj" + obj)
+                rows.append(item)
+        before = deepcopy(rows)
+        for modality in ("rgb", "depth"):
+            config = dict(self.config, modality=modality, task="gesture_object",
+                          data_quality=dict(allow_within_subject_test_overlap=True))
+            with patch("vision.dataset.read_dataset_rgbd_annotations", return_value=rows), \
+                 patch("vision.dataset.read_depth_frames", return_value=np.zeros((1,32,32))), \
+                 patch("vision.dataset.inspect_recording") as inspect:
+                # Keep real fixture video probing, and supply a synthetic depth index.
+                def inspect_fixture(folder, root, mode, probe_frames=True):
+                    value = inspect_recording(folder, root, "rgb", probe_frames=probe_frames)
+                    value["depth_map"] = {i: "synthetic-depth.png" for i in range(1000)}
+                    return value
+                inspect.side_effect = inspect_fixture
+                prepared = prepare_video_dataset(self.dataset, config, self.p2)
+                self.assertEqual(len(prepared["label_mapping"]), 8)
+                for clips in prepared["folds"][0]["splits"].values():
+                    for clip in clips:
+                        self.assertEqual(clip["label"], prepared["label_mapping"][joint_label(clip["gesture_label"], clip["object_id"])])
+                config["task"] = "gesture"
+                p3 = dict(name="protocol3", type="held_out_objects", split_before_windowing=True)
+                prepared = prepare_video_dataset(self.dataset, config, p3)
+                for part in ("train", "validation", "test"):
+                    self.assertEqual({c["object_id"] for c in prepared["folds"][0]["splits"][part]},
+                                     {"2"} if part == "test" else {"1"})
+        self.assertEqual(rows, before)
+
     @classmethod
     def setUpClass(cls):
         base = PROJECT_ROOT / "runs" / "test_fixtures"
@@ -122,6 +161,23 @@ class VideoDataTests(unittest.TestCase):
             sets = [{s["subject_id"] for s in fold["splits"][part]} for part in ("train","validation","test")]
             self.assertEqual([len(s) for s in sets], [1,1,1])
             self.assertFalse(sets[0]&sets[1] or sets[0]&sets[2] or sets[1]&sets[2])
+
+    def test_percentage_mode_ignores_repetition_rules_and_keeps_clips_together(self):
+        protocol = dict(self.p2, grouped_percentages=True,
+                        split_percentages=dict(train=70, validation=15, test=15),
+                        train_repetitions=[999], test_repetitions=[999])
+        for task in ("gesture", "gesture_object"):
+            config = dict(self.config, task=task)
+            prepared = prepare_video_dataset(self.dataset, config, protocol)
+            fold = prepared["folds"][0]
+            self.assertEqual(fold["protocol_metadata"]["percentage_split"]["requested_percentages"],
+                             dict(train=70, validation=15, test=15))
+            assigned = {}
+            for part in ("train", "validation", "test"):
+                for clip in fold["splits"][part]:
+                    key = tuple(clip[k] for k in ("subject_id", "session_id", "object_id", "repetition"))
+                    self.assertEqual(assigned.setdefault(key, part), part)
+                self.assertEqual({c["label"] for c in fold["splits"][part]}, set(prepared["label_mapping"].values()))
 
     def test_missing_view_annotations_fail_without_copying(self):
         config = dict(self.config, views=["left"])
