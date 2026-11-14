@@ -81,6 +81,28 @@ class VideoTrainingTests(unittest.TestCase):
                                          self.output, Path(self.temporary.name) / "unused_source")
         return result, stdout.getvalue()
 
+    def test_protocol1_selects_equal_participant_mean_not_pooled_f1(self):
+        actual = [0, 1] * 11
+        first, second = actual[:20] + [1, 0], [0] * 20 + [0, 1]
+        self.fold['protocol_metadata'] = dict(type='leave_one_subject_out')
+        template = self.fold['splits']['validation'][0]
+        self.fold['splits']['validation'] = [dict(template, sample_id='v'+str(i), label=label,
+            subject_id='large' if i < 20 else 'small') for i, label in enumerate(actual)]
+        metrics = [dict(training.classification_metrics(actual, pred, self.mapping), loss=1.) for pred in (first, second)]
+        final = dict(training.classification_metrics([0, 1], [0, 1], self.mapping), loss=0.1)
+        with patch.object(training, 'evaluate', side_effect=[(metrics[0], first), (metrics[1], second), (final, [0,1])]) as evaluation:
+            result, terminal = self.run_training()
+        self.assertEqual(result['selection'], 'validation_subject_mean_macro_f1')
+        self.assertEqual(result['selected_epoch'], 2)
+        self.assertEqual(evaluation.call_count, 3)
+        self.assertEqual(evaluation.call_args_list[-1].args[1].dataset.partition, 'test')
+        self.assertIn('equal participant weight', terminal)
+        with (self.output/'history.csv').open(encoding='utf-8') as stream:
+            rows = list(csv.DictReader(stream))
+        self.assertAlmostEqual(float(rows[0]['validation_macro_f1']), 0.5)
+        self.assertAlmostEqual(float(rows[1]['validation_macro_f1']), 2/3)
+        self.assertGreater(float(rows[0]['validation_pooled_macro_f1']), float(rows[1]['validation_pooled_macro_f1']))
+
     def test_artifacts_and_terminal_report(self):
         result, terminal = self.run_training()
         for name in ("best.pt", "last.pt", "history.csv", "confusion_matrix.csv",

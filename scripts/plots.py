@@ -186,10 +186,13 @@ def generate_fold_report(output_dir):
     plots = _target(output, "plots")
     plots.mkdir(exist_ok=True)
     selected = result.get("selected_epoch")
+    validation_title = ("Validation macro F1 (mean across participants)"
+                        if result.get("selection") == "validation_subject_mean_macro_f1"
+                        else "Validation macro F1")
     curves = [
         ("loss", "Training and validation loss", "Cross-entropy loss", [("train_loss", "Train", "#2563eb"), ("validation_loss", "Validation", "#d97706")], False, False),
         ("accuracy", "Training and validation accuracy", "Accuracy (%)", [("train_accuracy", "Train", "#2563eb"), ("validation_accuracy", "Validation", "#d97706")], True, False),
-        ("validation_f1", "Validation macro F1", "Macro F1 (%)", [("validation_macro_f1", "Validation", "#0d9488")], True, False),
+        ("validation_f1", validation_title, "Macro F1 (%)", [("validation_macro_f1", "Validation", "#0d9488")], True, False),
         ("learning_rate", "Learning rate used during each epoch", "Learning rate", [("learning_rate", "Learning rate", "#7c3aed")], False, True),
         ("epoch_duration", "Epoch duration", "Seconds (train + validation + checkpoints)", [("epoch_seconds", "Duration", "#64748b")], False, False),
     ]

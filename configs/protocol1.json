@@ -3,5 +3,13 @@
   "type": "leave_one_subject_out",
   "test_subject_id": null,
   "validation": null,
-  "split_before_windowing": true
+  "split_before_windowing": true,
+  "subject_counts": {
+    "train": null,
+    "validation": null,
+    "test": 1
+  },
+  "validation_subject_fraction": 0.25,
+  "test_subject_ids": null,
+  "validation_subject_ids": null
 }

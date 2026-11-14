@@ -81,6 +81,10 @@ def train_video(modality, config_path, protocol_path, *, prepare_only=False,
             raise ValueError("Preparation did not produce valid nonempty folds")
         results = []
         for fold in prepared["folds"]:
+            from scripts.subject_splits import participant_split_summary
+            participant_summary = participant_split_summary(fold.get("protocol_metadata", {}))
+            if participant_summary:
+                print("{}: {}".format(fold["name"], participant_summary), flush=True)
             from scripts.percentage_splits import percentage_split_summary
             split_summary = percentage_split_summary(fold.get("protocol_metadata", {}))
             if split_summary:
@@ -100,10 +104,8 @@ def train_video(modality, config_path, protocol_path, *, prepare_only=False,
             write_json(run / "aggregate_metrics.json", aggregate)
             from scripts.plots import save_training_report
             save_training_report(run, results=results)
-            if len(results) > 1:
-                print("\nFinal test results across {} folds (mean +/- standard deviation):".format(len(results)))
-                for key, title in (("accuracy", "Accuracy"), ("macro_f1", "Macro F1"), ("weighted_f1", "Weighted F1")):
-                    print("{}: {:.2%} +/- {:.2%}".format(title, aggregate[key]["mean"], aggregate[key]["std"]), flush=True)
+            from scripts.result_summary import format_overall_summary
+            print(format_overall_summary(aggregate), flush=True)
         update_run_config(run, status="prepared" if prepare_only else "complete", current_fold=None)
         return run
     except Exception as error:

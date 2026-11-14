@@ -12,12 +12,14 @@ import random
 
 from scripts.tasks import label_of
 from scripts.protocol_config import normalize_protocol
+from scripts.subject_splits import participant_partitions
 
 from scripts.protocols import (
     PARTITIONS,
     SplitValidationError,
     make_split_from_config,
     validate_split,
+    _records,
 )
 
 
@@ -143,7 +145,7 @@ def build_training_splits(records, protocol_config, validation_config=None, seed
     """Return strict training/validation/test split dictionaries for a protocol.
 
     ``test_subject_id: null`` builds all LOSO folds. ``auto`` validation means
-    the next sorted subject for LOSO, or seeded complete-trial selection for
+    the next approximately 25% of subjects for LOSO, or complete-trial selection for
     held-out repetitions. ``strategy: none`` explicitly disables validation.
     The original records and configuration are never changed. Pass only the
     relevant modality's interval timelines when checking modality-specific data.
@@ -173,27 +175,30 @@ def build_training_splits(records, protocol_config, validation_config=None, seed
     if protocol_type == "leave_one_subject_out":
         if strategy not in ("next_subject", "none"):
             raise ValueError("LOSO validation strategy must be 'auto', 'next_subject', or 'none'.")
+        if config.get("split_before_windowing") is not True:
+            raise ValueError("Protocols must assign source trials before windowing.")
+        records = _records(records)
         subjects = sorted({record["subject_id"] for record in records})
-        requested_test = config.get("test_subject_id")
-        tests = subjects if requested_test is None else [requested_test]
         explicit_validation = validation.get("validation_subject_id", validation.get("subject_id", config.get("validation_subject_id")))
         if strategy == "none" and explicit_validation is not None:
             raise ValueError("Explicit validation_subject_id conflicts with validation strategy='none'.")
-        if strategy != "none" and len(subjects) < 3:
-            raise ValueError("LOSO training with a separate validation subject requires at least three subjects.")
+        config["validation"] = {"strategy": strategy}
+        if explicit_validation is not None:
+            config["validation_subject_id"] = explicit_validation
         results = []
-        for test in tests:
-            if test not in subjects:
-                raise ValueError("Unknown test subject: {!r}".format(test))
-            held_validation = None
-            if strategy != "none":
-                held_validation = explicit_validation
-                if held_validation is None:
-                    held_validation = subjects[(subjects.index(test) + 1) % len(subjects)]
-            fold_config = dict(config, validation_subject_id=held_validation)
-            result = make_split_from_config(records, fold_config, test_subject_id=test, strict=False)
-            result["name"] = "{}_{}".format(config.get("name", "protocol1"), test)
-            result["metadata"]["validation"] = dict(validation, validation_subject_id=held_validation)
+        for selection in participant_partitions(subjects, config):
+            result = {part: [record for record in records if record["subject_id"] in selection[part]]
+                      for part in PARTITIONS}
+            result["name"] = "{}_{}".format(config.get("name", "protocol1"), "_".join(selection["test"]))
+            result["metadata"] = dict(
+                protocol="protocol1", type=protocol_type, subject_selection=selection["selection"],
+                subject_counts={part: len(selection[part]) for part in ("train", "validation", "test")},
+                requested_subject_counts=selection["requested_counts"],
+                train_subject_ids=selection["train"], validation_subject_ids=selection["validation"],
+                test_subject_ids=selection["test"], excluded_subject_ids=selection["excluded"],
+                test_subject_id=selection["test"][0] if len(selection["test"]) == 1 else None,
+                validation_subject_id=selection["validation"][0] if len(selection["validation"]) == 1 else None,
+                validation=dict(validation, subject_ids=selection["validation"]))
             results.append(_finish(result, allow_overlap))
         return results
 

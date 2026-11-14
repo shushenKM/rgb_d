@@ -1,5 +1,21 @@
 [
   {
+    "final_summary": {
+      "task": "gesture",
+      "score_scale": "fraction_0_to_1",
+      "gesture": {
+        "accuracy": 0.9333333333333333,
+        "macro_f1": 0.9262265525938493,
+        "weighted_f1": 0.9319372306677978
+      },
+      "test_examples": 300,
+      "test_loss": 0.33729063987731933,
+      "name": "protocol1_1Alice",
+      "selected_checkpoint": "best.pt",
+      "selected_epoch": 21,
+      "epochs_completed": 30,
+      "elapsed_s": 1594.4850000000006
+    },
     "name": "protocol1_1Alice",
     "fold": "protocol1_1Alice",
     "modality": "depth",
@@ -200,6 +216,22 @@
     }
   },
   {
+    "final_summary": {
+      "task": "gesture",
+      "score_scale": "fraction_0_to_1",
+      "gesture": {
+        "accuracy": 0.9966666666666667,
+        "macro_f1": 0.9962952672038531,
+        "weighted_f1": 0.9966657404834678
+      },
+      "test_examples": 300,
+      "test_loss": 0.021015674273173014,
+      "name": "protocol1_2Bingqian",
+      "selected_checkpoint": "best.pt",
+      "selected_epoch": 15,
+      "epochs_completed": 25,
+      "elapsed_s": 1301.9689999999973
+    },
     "name": "protocol1_2Bingqian",
     "fold": "protocol1_2Bingqian",
     "modality": "depth",
@@ -400,6 +432,22 @@
     }
   },
   {
+    "final_summary": {
+      "task": "gesture",
+      "score_scale": "fraction_0_to_1",
+      "gesture": {
+        "accuracy": 0.83,
+        "macro_f1": 0.7983674713131834,
+        "weighted_f1": 0.8176903880474112
+      },
+      "test_examples": 300,
+      "test_loss": 1.0518522143363953,
+      "name": "protocol1_3Chawki",
+      "selected_checkpoint": "best.pt",
+      "selected_epoch": 12,
+      "epochs_completed": 22,
+      "elapsed_s": 1110.436999999998
+    },
     "name": "protocol1_3Chawki",
     "fold": "protocol1_3Chawki",
     "modality": "depth",

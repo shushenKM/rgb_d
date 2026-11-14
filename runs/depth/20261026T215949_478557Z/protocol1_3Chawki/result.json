@@ -1,4 +1,20 @@
 {
+  "final_summary": {
+    "task": "gesture",
+    "score_scale": "fraction_0_to_1",
+    "gesture": {
+      "accuracy": 0.83,
+      "macro_f1": 0.7983674713131834,
+      "weighted_f1": 0.8176903880474112
+    },
+    "test_examples": 300,
+    "test_loss": 1.0518522143363953,
+    "name": "protocol1_3Chawki",
+    "selected_checkpoint": "best.pt",
+    "selected_epoch": 12,
+    "epochs_completed": 22,
+    "elapsed_s": 1110.436999999998
+  },
   "name": "protocol1_3Chawki",
   "fold": "protocol1_3Chawki",
   "modality": "depth",

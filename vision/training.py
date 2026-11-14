@@ -35,6 +35,7 @@ from scripts.artifacts import PROJECT_ROOT, write_json
 from scripts.labels import validate_label_mapping
 from scripts.tasks import prediction_labels
 from scripts.metrics import classification_metrics, format_test_report
+from scripts.validation_scoring import validation_selection, validation_score, print_validation_selection
 
 
 def _output_directory(output_dir, modality=None):
@@ -291,7 +292,8 @@ def train_fold(fold, label_mapping, config, output_dir, dataset_root):
     set_seed(settings["seed"], settings["deterministic"])
     amp = settings["amp"] and device.type == "cuda"
     has_validation = bool(samples["validation"])
-    selection = "validation_macro_f1" if has_validation else "last_epoch_no_validation"
+    selection = validation_selection(fold, has_validation)
+    print_validation_selection(selection)
     loaders = {part: _loader(_make_dataset(part_samples, dataset_root, config, training=part == "train"),
                              settings, device, shuffle=part == "train")
                for part, part_samples in samples.items() if part in ("train", "validation") and part_samples}
@@ -317,7 +319,7 @@ def train_fold(fold, label_mapping, config, output_dir, dataset_root):
         len(samples["train"]), len(samples["validation"]), len(samples["test"])), flush=True)
     with _artifact(output, "history.csv").open("w", encoding="utf-8", newline="") as f:
         fields = ["epoch", "learning_rate", "next_learning_rate", "train_loss", "train_accuracy",
-                  "validation_loss", "validation_accuracy", "validation_macro_f1", "epoch_seconds"]
+                  "validation_loss", "validation_accuracy", "validation_macro_f1", "validation_pooled_macro_f1", "epoch_seconds"]
         writer = csv.DictWriter(f, fields)
         writer.writeheader()
         for epoch in range(1, settings["epochs"] + 1):
@@ -350,13 +352,15 @@ def train_fold(fold, label_mapping, config, output_dir, dataset_root):
                        train_accuracy=correct / count, validation_loss="", validation_accuracy="", validation_macro_f1="")
             improved = False
             if has_validation:
-                validation, _ = evaluate(model, loaders["validation"], label_mapping, device, amp)
+                validation, validation_predictions = evaluate(model, loaders["validation"], label_mapping, device, amp)
+                score = validation_score(validation, [sample["label"] for sample in samples["validation"]], validation_predictions, samples["validation"],
+                                         label_mapping, selection)
                 row.update(validation_loss=validation["loss"], validation_accuracy=validation["accuracy"],
-                           validation_macro_f1=validation["macro_f1"])
-                improved = validation["macro_f1"] > best_score or (
-                    validation["macro_f1"] == best_score and validation["loss"] < best_loss)
+                           validation_macro_f1=score, validation_pooled_macro_f1=validation["macro_f1"])
+                improved = score > best_score or (
+                    score == best_score and validation["loss"] < best_loss)
                 if improved:
-                    best_score, best_loss, best_epoch, stale = validation["macro_f1"], validation["loss"], epoch, 0
+                    best_score, best_loss, best_epoch, stale = score, validation["loss"], epoch, 0
                 else:
                     stale += 1
                 if scheduler:

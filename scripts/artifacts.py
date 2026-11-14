@@ -31,6 +31,8 @@ def _json_default(value):
 
 
 def write_json(path, value):
+    from .result_summary import prepare_json
+    value = prepare_json(Path(path).name, value)
     with Path(path).open("w", encoding="utf-8") as stream:
         json.dump(value, stream, indent=2, ensure_ascii=False, allow_nan=False, default=_json_default)
         stream.write("\n")

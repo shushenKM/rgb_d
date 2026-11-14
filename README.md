@@ -1,10 +1,66 @@
 # RGB and depth manipulative gesture recognition
 
+## Protocol 1 participant defaults
+
+Edit `configs/protocol1.json` (commands still use `--protocol protocol1`):
+
+```json
+"subject_counts": {"train": null, "validation": null, "test": 1},
+"validation_subject_fraction": 0.25,
+"test_subject_ids": null,
+"validation_subject_ids": null
+```
+
+- `validation: null` selects approximately 25% of the selected participants:
+  round `N * validation_subject_fraction` to the nearest integer, halves up,
+  with at least one validation participant. Eight people give **5/2/1**;
+  nine give **6/2/1** (train/validation/test).
+- `train: null` uses everyone remaining. Set explicit integers to override
+  automatic counts, for example `{"train": 4, "validation": 3, "test": 1}`.
+  `validation: 0` disables validation. Counts must leave at least one training
+  participant; invalid requests raise an error instead of silently changing them.
+- With `test: 1` and no fixed test IDs, every participant is tested once in a
+  separate LOSO fold with a fresh model. Validation takes the next available
+  participants in cyclic sorted order. The final report averages all test folds.
+- Fixed `test_subject_ids` selects one fold; set `test` to that list's length.
+  To fix validation people too, supply `validation_subject_ids`; its length is
+  used when `validation` is null, otherwise it must match the explicit count.
+  Fixed validation IDs require fixed test IDs. Legacy singular ID settings still work.
+- Protocol 1 checkpoints and early stopping use the **equal-participant mean
+  validation macro F1**: calculate macro F1 per validation person over the full
+  target vocabulary, then average. This applies to both `gesture` and
+  `gesture_object`. Epoch `validation_macro_f1` is this selection score;
+  `validation_pooled_macro_f1` preserves the pooled score. Validation loss and
+  accuracy remain pooled; loss still breaks F1 ties and controls loss-based
+  schedulers. Protocols 2 and 3 retain their existing scoring and split rules.
+
+
 ## Command and parameter guide
 
 Saved runs are versioned, with checkpoint files stored through Git LFS.
 See [uploading/downloading runs](runs/README.md) for commands on each computer.
 Joint-task run names begin with `<modality>_gesture_object_<model>_batch...`.
+
+Every fold's `result.json` begins with `final_summary`: final accuracy, macro F1,
+weighted F1, test loss/support and checkpoint details. Joint-task summaries have
+separate `gesture_object`, `gesture` and `object` scores from the same predictions.
+Confusion matrices and per-class details remain under `test_metrics` below it.
+Entries in `results.json` use the same summary-first format.
+
+`aggregate_metrics.json` begins with the mean and population standard deviation
+for all available targets across **completed test folds**, equally weighted. For
+protocol1 LOSO, this means tested participants, not objects. A fixed two-person
+test set is one fold, not two. The terminal prints the same component averages.
+JSON scores are fractions (0–1); terminal scores are percentages. The completed
+fold count is explicit so a partial run cannot be mistaken for all participants.
+
+Refresh existing summaries without retraining or changing recorded metrics:
+
+```powershell
+python -m scripts.result_summary --all
+# Or just one run: replace YOUR_RUN_FOLDER
+python -m scripts.result_summary --run "runs/rgb/YOUR_RUN_FOLDER"
+```
 
 Run from `rgb_d` with your environment activated. Each command is an independent
 example. CLI values override config values. Dataset/annotation files stay
@@ -80,7 +136,7 @@ These entry points have no `--experiment`, `--audit-only`, `--amp` or
 | File / setting | Effect |
 | --- | --- |
 | `configs/protocol1.json`: `test_subject_id` | Null rotates LOSO test participants; an ID fixes one test fold. |
-| `configs/<modality>.json`: `training.validation` | Auto uses a validation participant for protocol1 and grouped trials for repetition/object modes; `fraction` controls grouped validation. |
+| `configs/<modality>.json`: `training.validation` | Auto uses protocol1 participant counts and fraction and grouped trials for repetition/object modes; `fraction` controls grouped validation. |
 | `configs/protocol2.json`: `grouped_percentages: false` | Use `train_repetitions`, `test_repetitions`, gesture-specific rules, and model validation settings. |
 | Same file: `grouped_percentages: true` | Use `split_percentages: {"train": 70, "validation": 15, "test": 15}` and `split_seed`; repetition/model validation rules are inactive. |
 | `configs/protocol3.json`: `test_object_ids` | Fixed test objects per gesture. These lists override `object_selection: last_per_gesture`; defaults are 6 for general gestures, 5 for insert/deinsert, 2 for screw. |
