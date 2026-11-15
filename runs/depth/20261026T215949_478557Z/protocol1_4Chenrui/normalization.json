@@ -1,8 +1,0 @@
-{
-  "method": "fixed_depth_range",
-  "minimum": 0.0,
-  "maximum": 5000.0,
-  "units": "raw_recorded_depth_values",
-  "zero_is_missing": true,
-  "fitted": false
-}

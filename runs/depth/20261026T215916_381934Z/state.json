@@ -1,6 +1,0 @@
-{
-  "state": "failed",
-  "synthetic": false,
-  "error_type": "VideoDatasetPreparationError",
-  "message": "Video preparation requires review: invalid_training_split"
-}

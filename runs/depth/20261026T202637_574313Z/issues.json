@@ -1,7 +1,0 @@
-[
-  {
-    "code": "annotation_read_error",
-    "message": "Expected exactly one rgb_depth_gesture_segments*_EN.csv in D:\\Manipulative_dataset\\dataset\\9Ningyuan\\annotation; found 0",
-    "severity": "error"
-  }
-]

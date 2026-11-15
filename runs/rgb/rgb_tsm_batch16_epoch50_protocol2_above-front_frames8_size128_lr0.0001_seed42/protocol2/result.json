@@ -1,0 +1,397 @@
+{
+  "final_summary": {
+    "task": "gesture",
+    "score_scale": "fraction_0_to_1",
+    "gesture": {
+      "accuracy": 0.8671875,
+      "macro_f1": 0.8638809858398657,
+      "weighted_f1": 0.8396369487866199
+    },
+    "test_examples": 512,
+    "test_loss": 0.7395029221661389,
+    "name": "protocol2",
+    "selected_checkpoint": "best.pt",
+    "selected_epoch": 30,
+    "epochs_completed": 40,
+    "elapsed_s": 3669.4839999999967
+  },
+  "name": "protocol2",
+  "fold": "protocol2",
+  "modality": "rgb",
+  "model": "tsm",
+  "views": [
+    "above",
+    "front"
+  ],
+  "epochs_completed": 40,
+  "best_epoch": 30,
+  "selected_epoch": 30,
+  "selected_checkpoint": "best.pt",
+  "selection": "validation_macro_f1",
+  "elapsed_s": 3669.4839999999967,
+  "test_metrics": {
+    "accuracy": 0.8671875,
+    "macro_f1": 0.8638809858398657,
+    "weighted_f1": 0.8396369487866199,
+    "per_class": {
+      "approach": {
+        "index": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 48
+      },
+      "deinsert": {
+        "index": 1,
+        "precision": 0.7741935483870968,
+        "recall": 1.0,
+        "f1": 0.8727272727272727,
+        "support": 48
+      },
+      "grasp": {
+        "index": 2,
+        "precision": 0.9795918367346939,
+        "recall": 1.0,
+        "f1": 0.9896907216494846,
+        "support": 48
+      },
+      "insert": {
+        "index": 3,
+        "precision": 0.48,
+        "recall": 1.0,
+        "f1": 0.6486486486486487,
+        "support": 48
+      },
+      "lift": {
+        "index": 4,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 48
+      },
+      "move": {
+        "index": 5,
+        "precision": 0.9896907216494846,
+        "recall": 1.0,
+        "f1": 0.9948186528497409,
+        "support": 96
+      },
+      "place": {
+        "index": 6,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 48
+      },
+      "release": {
+        "index": 7,
+        "precision": 1.0,
+        "recall": 0.9791666666666666,
+        "f1": 0.9894736842105264,
+        "support": 48
+      },
+      "screw": {
+        "index": 8,
+        "precision": 1.0,
+        "recall": 0.1625,
+        "f1": 0.27956989247311825,
+        "support": 80
+      }
+    },
+    "confusion_matrix": [
+      [
+        48,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        48,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        48,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        48,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        48,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        96,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        48,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        47,
+        0
+      ],
+      [
+        0,
+        14,
+        0,
+        52,
+        0,
+        1,
+        0,
+        0,
+        13
+      ]
+    ],
+    "class_names": [
+      "approach",
+      "deinsert",
+      "grasp",
+      "insert",
+      "lift",
+      "move",
+      "place",
+      "release",
+      "screw"
+    ],
+    "sample_count": 512,
+    "loss": 0.7395029221661389
+  },
+  "training_details": {
+    "model": {
+      "name": "tsm",
+      "class_name": "VideoRecognitionModel",
+      "model_parameters": {
+        "pretrained_backbone": null
+      },
+      "provenance": {
+        "model": "tsm",
+        "modality": "rgb",
+        "backbone": "resnet18",
+        "num_frames": 8,
+        "input_layout": "B,V,T,C,H,W",
+        "view_fusion": "mean_logits_shared_weights",
+        "model_parameters": {
+          "shift_div": 8,
+          "dropout": 0.5,
+          "dropout_backbone": 0.1,
+          "dropout_transformer": 0.5,
+          "n_head": 8,
+          "dff": 1024,
+          "pretrained_backbone": null
+        },
+        "initialization": "random",
+        "pretrained_backbone_sha256": null,
+        "multiscale_dimensions": null,
+        "upstream_source_sha256": {
+          "models/tsm/ops/temporal_shift.py": "90dfd7f97e82e31dd9f4044960061ecaadfca3ba939c6e49ee6d326c8cc718ea",
+          "models/tsm/ops/models.py": "ed2637f88024f29df3fda87fc8f7f2877877ccf5da86dd1465f310fd72207446",
+          "models/mvtn/src_mvtn/models/backbones/resnet.py": "dfe6a0586fee982af565ea2d6d770850b7ea1c8902a83e81b0ad03bb3a278e4c"
+        },
+        "adaptations": [
+          "portable device/dtype placement",
+          "RGB/depth input channels",
+          "shared per-view model and mean-logit fusion",
+          "independent local training pipeline",
+          "ResNet18 blockres shifts; all BatchNorm layers trainable"
+        ]
+      },
+      "modality": "rgb",
+      "views": [
+        "above",
+        "front"
+      ],
+      "input": {
+        "num_frames": 8,
+        "image_size": 128
+      },
+      "trainable_parameters": 11181129,
+      "loss": "cross_entropy",
+      "optimizer": "AdamW",
+      "checkpoint_selection": "validation_macro_f1",
+      "scheduler": {
+        "type": "reduce_on_plateau",
+        "factor": 0.5,
+        "patience": 3,
+        "min_lr": 1e-06,
+        "active": true,
+        "monitor": "validation_loss"
+      }
+    },
+    "environment": {
+      "python": "3.11.9",
+      "python_executable": "D:\\python_envs\\imu_semg_env\\Scripts\\python.exe",
+      "torch": "2.7.0+cu128",
+      "numpy": "2.4.6",
+      "packages": {
+        "opencv-python-headless": "4.14.0.94",
+        "Pillow": "12.3.0"
+      },
+      "device": "cuda",
+      "amp": true,
+      "cuda_build": "12.8",
+      "cuda_available": true,
+      "gpu_name": "NVIDIA GeForce RTX 3070",
+      "cudnn_version": 90701,
+      "deterministic_algorithms": true
+    },
+    "parameters": {
+      "epochs": 50,
+      "batch_size": 16,
+      "learning_rate": 0.0001,
+      "weight_decay": 0.001,
+      "seed": 42,
+      "device": "cuda",
+      "num_workers": 4,
+      "cpu_threads": 4,
+      "deterministic": true,
+      "amp": true,
+      "validation": {
+        "strategy": "auto",
+        "fraction": 0.2,
+        "allow_train_validation_overlap": true
+      },
+      "scheduler": {
+        "type": "reduce_on_plateau",
+        "factor": 0.5,
+        "patience": 3,
+        "min_lr": 1e-06
+      },
+      "early_stopping_patience": 10,
+      "gradient_clip_norm": 5.0
+    },
+    "split_summary": {
+      "train": {
+        "parents": 1399,
+        "clips": 1511,
+        "subjects": [
+          "1Alice",
+          "2Bingqian",
+          "3Chawki",
+          "4Chenrui",
+          "5Imad",
+          "6Jeremy",
+          "7Shushen",
+          "8Yang"
+        ],
+        "gesture_counts": {
+          "approach": 149,
+          "deinsert": 156,
+          "grasp": 149,
+          "insert": 156,
+          "lift": 153,
+          "move": 306,
+          "place": 153,
+          "release": 149,
+          "screw": 140
+        }
+      },
+      "validation": {
+        "parents": 361,
+        "clips": 377,
+        "subjects": [
+          "1Alice",
+          "2Bingqian",
+          "3Chawki",
+          "4Chenrui",
+          "5Imad",
+          "6Jeremy",
+          "7Shushen",
+          "8Yang"
+        ],
+        "gesture_counts": {
+          "approach": 43,
+          "deinsert": 36,
+          "grasp": 43,
+          "insert": 36,
+          "lift": 39,
+          "move": 78,
+          "place": 39,
+          "release": 43,
+          "screw": 20
+        }
+      },
+      "test": {
+        "parents": 448,
+        "clips": 512,
+        "subjects": [
+          "1Alice",
+          "2Bingqian",
+          "3Chawki",
+          "4Chenrui",
+          "5Imad",
+          "6Jeremy",
+          "7Shushen",
+          "8Yang"
+        ],
+        "gesture_counts": {
+          "approach": 48,
+          "deinsert": 48,
+          "grasp": 48,
+          "insert": 48,
+          "lift": 48,
+          "move": 96,
+          "place": 48,
+          "release": 48,
+          "screw": 80
+        }
+      }
+    }
+  }
+}
