@@ -1,0 +1,96 @@
+{
+  "final_summary": {
+    "task": "gesture_object",
+    "completed_fold_count": 1,
+    "averaging": "equal_weight_per_completed_test_fold",
+    "standard_deviation": "population_across_folds",
+    "score_scale": "fraction_0_to_1",
+    "gesture_object": {
+      "accuracy": {
+        "mean": 0.80859375,
+        "std": 0.0
+      },
+      "macro_f1": {
+        "mean": 0.8259446063289702,
+        "std": 0.0
+      },
+      "weighted_f1": {
+        "mean": 0.8117279622417083,
+        "std": 0.0
+      }
+    },
+    "gesture": {
+      "accuracy": {
+        "mean": 0.88671875,
+        "std": 0.0
+      },
+      "macro_f1": {
+        "mean": 0.8829399743664094,
+        "std": 0.0
+      },
+      "weighted_f1": {
+        "mean": 0.8857254722313598,
+        "std": 0.0
+      }
+    },
+    "object": {
+      "accuracy": {
+        "mean": 0.861328125,
+        "std": 0.0
+      },
+      "macro_f1": {
+        "mean": 0.86765557214497,
+        "std": 0.0
+      },
+      "weighted_f1": {
+        "mean": 0.861287490577576,
+        "std": 0.0
+      }
+    }
+  },
+  "fold_count": 1,
+  "accuracy": {
+    "mean": 0.80859375,
+    "std": 0.0
+  },
+  "macro_f1": {
+    "mean": 0.8259446063289702,
+    "std": 0.0
+  },
+  "weighted_f1": {
+    "mean": 0.8117279622417083,
+    "std": 0.0
+  },
+  "component_metrics": {
+    "gesture": {
+      "fold_count": 1,
+      "accuracy": {
+        "mean": 0.88671875,
+        "std": 0.0
+      },
+      "macro_f1": {
+        "mean": 0.8829399743664094,
+        "std": 0.0
+      },
+      "weighted_f1": {
+        "mean": 0.8857254722313598,
+        "std": 0.0
+      }
+    },
+    "object": {
+      "fold_count": 1,
+      "accuracy": {
+        "mean": 0.861328125,
+        "std": 0.0
+      },
+      "macro_f1": {
+        "mean": 0.86765557214497,
+        "std": 0.0
+      },
+      "weighted_f1": {
+        "mean": 0.861287490577576,
+        "std": 0.0
+      }
+    }
+  }
+}
